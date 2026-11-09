@@ -112,14 +112,13 @@ export const TOOLS: ToolDef[] = [
   {
     name: "fintecia_transactions",
     description:
-      "Income/expenses across CFDI + bank, filterable by period/category/supplier. " +
+      "Income/expenses across CFDI + bank, filterable by text. " +
       "Raw data: use for INSPECTION only, never to sum totals — use " +
       "fintecia_financials for any 'how much' answer.",
     inputSchema: z.object({
-      desde: z.string().optional().describe("YYYY-MM-DD."),
-      hasta: z.string().optional().describe("YYYY-MM-DD."),
-      supplierRfc: z.string().optional().describe("Filtrar por RFC del proveedor."),
-      category: z.string().optional().describe("Filtrar por categoría."),
+      taxpayerRfc: z.string().describe("RFC del contribuyente."),
+      query: z.string().optional().describe("Texto a buscar (descripción, referencia, UUID)."),
+      limit: z.number().int().min(1).max(100).optional(),
     }),
     annotations: { readOnlyHint: true },
   },
@@ -183,6 +182,7 @@ export const TOOLS: ToolDef[] = [
       "Risk card for a single supplier RFC: 69-B status, art. 69, canceled invoices, " +
       "and payment anomalies in your history.",
     inputSchema: z.object({
+      taxpayerRfc: z.string().describe("RFC del contribuyente."),
       rfc: z.string().describe("RFC del proveedor a evaluar."),
     }),
     annotations: { readOnlyHint: true },

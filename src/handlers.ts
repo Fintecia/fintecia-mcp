@@ -247,10 +247,23 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
     );
   });
 
+  handlers.set("fintecia_transactions", async (input) => {
+    const taxpayerRfc = String(input.taxpayerRfc ?? "");
+    const { taxpayerRfc: _t, ...filters } = input;
+    return json(await readClient.read("/api/v1/mcp/transactions", taxpayerRfc, filters));
+  });
+
+  handlers.set("fintecia_risk_check", async (input) => {
+    const taxpayerRfc = String(input.taxpayerRfc ?? "");
+    return json(
+      await readClient.read("/api/v1/mcp/risk-check", taxpayerRfc, {
+        rfc: String(input.rfc ?? ""),
+      }),
+    );
+  });
+
   // Everything else keeps a stub until its task lands.
   for (const name of [
-    "fintecia_transactions",
-    "fintecia_risk_check",
     "fintecia_deductibility",
   ]) {
     if (!handlers.has(name)) handlers.set(name, stub(name));
