@@ -1,19 +1,20 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { TOOLS } from "./tools.js";
+import { createHandlers } from "./handlers.js";
 
 /**
  * Fintecia MCP server — local, read-only (+ local e-firma download).
- *
- * Scaffold (T0): registers all 15 tools from `tools.ts` with stub handlers.
- * Handlers are wired in T1–T8 (keychain/onboarding, DescargaMasiva, upload,
- * public data, reconciliation/deductibility/risk, PDF parser, telemetry).
  */
 
 function createServer(): McpServer {
   const server = new McpServer({ name: "fintecia-mcp", version: "0.1.0" });
+  const handlers = createHandlers();
 
   for (const tool of TOOLS) {
+    const handler = handlers.get(tool.name);
+    if (!handler) continue;
+
     server.registerTool(
       tool.name,
       {
@@ -21,16 +22,7 @@ function createServer(): McpServer {
         inputSchema: tool.inputSchema,
         annotations: tool.annotations,
       },
-      async (_input) => ({
-        content: [
-          {
-            type: "text",
-            text:
-              `[fintecia-mcp] "${tool.name}" is defined but not yet implemented ` +
-              `(T1–T8).`,
-          },
-        ],
-      }),
+      async (input) => handler(input as Record<string, unknown>),
     );
   }
 

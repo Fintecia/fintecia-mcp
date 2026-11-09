@@ -3,8 +3,9 @@
 MCP server local de **Fintecia** — descarga de CFDI con e-firma local, conciliación
 banco↔CFDI, riesgo 69-B/EFOS y deducibilidad fiscal, para agentes (Claude, ChatGPT, Cursor).
 
-> **Estado: scaffold (T0).** Las tools están definidas pero aún no implementadas.
-> Ver el diseño en `odd/tasks/mcp-local.md` del repo `mvp` (work_items/179).
+> **Estado: en desarrollo.** `sat_efos_check` (69-B) ya funciona con un fixture de
+> datos; el resto son stubs. Ver el diseño en `odd/tasks/mcp-local.md` del repo
+> `mvp` (work_items/179).
 
 ## Qué hace
 
@@ -23,7 +24,7 @@ npm run build      # compila a dist/
 npm start          # corre el server por stdio
 ```
 
-Configuración de un cliente (ej. Claude Desktop):
+Configuración de un cliente (ej. Claude Desktop) — en `claude_desktop_config.json`:
 
 ```json
 {
@@ -34,6 +35,17 @@ Configuración de un cliente (ej. Claude Desktop):
     }
   }
 }
+```
+
+Probar rápido desde la terminal:
+
+```bash
+npm run build
+printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2026-07-28","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"sat_efos_check","arguments":{"rfc":"AAA120730823"}}}' \
+  | node dist/index.js
 ```
 
 ## Desarrollo
