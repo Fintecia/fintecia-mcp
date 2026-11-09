@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { EfosLookup, normalizeRfc } from "./public/efos.js";
+import { buildExpresionImpresa, VerificationClient } from "./public/verify.js";
 import {
   validateDownloadArgs,
   type DescargaTipo,
@@ -114,6 +115,30 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
     );
   });
 
+  handlers.set("cfdi_verify", async (input) => {
+    const uuid = String(input.uuid ?? "");
+    const emisorRfc = String(input.emisorRfc ?? "");
+    const receptorRfc = String(input.receptorRfc ?? "");
+    const total = Number(input.total);
+
+    if (!uuid || !emisorRfc || !receptorRfc || !Number.isFinite(total)) {
+      return text(
+        "cfdi_verify: se requieren uuid, emisorRfc, receptorRfc y total (o xmlBase64).",
+      );
+    }
+
+    const expresion = buildExpresionImpresa({ emisorRfc, receptorRfc, total, uuid });
+    const client = new VerificationClient(deps.fetchFn ?? fetch);
+    const result = await client.consulta(expresion);
+
+    const efos = result.validacionEfos
+      ? ` · ValidacionEFOS ${result.validacionEfos}`
+      : "";
+    return text(
+      `CFDI ${uuid}: ${result.estado}${efos}${result.codigoEstatus ? ` · ${result.codigoEstatus}` : ""}.`,
+    );
+  });
+
   handlers.set("cfdi_download", async (input) => {
     const args = validateDownloadArgs(input);
     const material = await fielProvider.load(args.rfc);
@@ -179,7 +204,6 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
 
   // Everything else keeps a stub until its task lands.
   for (const name of [
-    "cfdi_verify",
     "fintecia_profile",
     "fintecia_transactions",
     "fintecia_cfdi",
