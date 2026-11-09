@@ -51,6 +51,15 @@ function loadEfos(): EfosLookup {
   return EfosLookup.fromJson(JSON.parse(json));
 }
 
+function loadDebts(): EfosLookup {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const json = readFileSync(
+    path.join(here, "public", "data", "debts.fixture.json"),
+    "utf8",
+  );
+  return EfosLookup.fromJson(JSON.parse(json));
+}
+
 function stub(name: string): ToolHandler {
   return async () => ({
     content: [
@@ -72,6 +81,7 @@ function json(value: unknown): ToolResult {
 
 export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler> {
   const efos = loadEfos();
+  const debts = loadDebts();
   const fielProvider = deps.fielProvider ?? new InMemoryFielProvider();
   const jobStore = deps.jobStore ?? new InMemoryJobStore();
 
@@ -88,6 +98,19 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
     const oficio = entry.oficio ? ` · oficio ${entry.oficio}` : "";
     return text(
       `RFC ${entry.rfc}: ${entry.situacion.toUpperCase()}${oficio} — ${entry.nombre}.`,
+    );
+  });
+
+  handlers.set("sat_debts_check", async (input) => {
+    const rfc = normalizeRfc(String(input.rfc ?? ""));
+    const entry = debts.check(rfc);
+    if (!entry) {
+      return text(
+        `RFC ${rfc}: no aparece en el listado art. 69 (créditos fiscales firmes).`,
+      );
+    }
+    return text(
+      `RFC ${entry.rfc}: crédito fiscal firme (art. 69) — ${entry.nombre}.`,
     );
   });
 
@@ -156,7 +179,6 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
 
   // Everything else keeps a stub until its task lands.
   for (const name of [
-    "sat_debts_check",
     "cfdi_verify",
     "fintecia_profile",
     "fintecia_transactions",
