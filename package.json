@@ -17,7 +17,7 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "test:smoke": "tsx test/smoke/fiel.smoke.ts && tsx test/smoke/onboard.smoke.ts",
+    "test:smoke": "tsx test/smoke/fiel.smoke.ts && tsx test/smoke/onboard.smoke.ts && tsx test/smoke/descarga.smoke.ts && tsx test/smoke/handlers.smoke.ts",
     "onboard": "tsx src/onboard/cli.ts"
   },
   "dependencies": {

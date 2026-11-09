@@ -73,11 +73,17 @@ export const TOOLS: ToolDef[] = [
       "Trigger SAT DescargaMasiva for a period using the LOCAL e-firma (never " +
       "uploaded to Fintecia). Async: returns a job id; poll with " +
       "cfdi_download_status. Emitidos = invoices you issued; recibidos = invoices " +
-      "you received. This has side effects (download + upload to Fintecia).",
+      "you received. This has side effects (download + upload to Fintecia). " +
+      "The e-firma material (.cer/.key/password) is resolved locally by RFC via " +
+      "the FielProvider — it never leaves the machine; only the resulting CFDIs " +
+      "are uploaded.",
     inputSchema: z.object({
       tipo: z.enum(["emitidos", "recibidos", "ambos"]).describe("Qué descargar."),
       desde: z.string().describe("Fecha de inicio (YYYY-MM-DD)."),
       hasta: z.string().describe("Fecha de fin (YYYY-MM-DD)."),
+      rfc: z
+        .string()
+        .describe("RFC de la e-firma local a usar (clave del FielProvider)."),
     }),
     annotations: { destructiveHint: true },
   },
