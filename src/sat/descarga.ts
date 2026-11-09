@@ -54,15 +54,16 @@ export class DescargaClient {
   constructor(private readonly options: DescargaClientOptions = {}) {}
 
   /**
-   * Run the full flow and return the downloaded CFDI XMLs (already parsed).
-   * A period with no invoices yields an empty array, not an error.
+   * Run the full flow and return the downloaded package ZIPs (base64) — NOT
+   * extracted: the client uploads the ZIPs as-is and the backend reuses its
+   * own `ingestZipBuffer` (same as the web app's `processCfdiZip`). A period
+   * with no invoices yields an empty array, not an error.
    */
   async descargar(
     material: FielMaterial,
     periodo: Period,
     tipo: DescargaTipo,
-  ): Promise<DownloadedCfdi[]> {
-    const cfdiTipo: CfdiTipo = tipo === "emitidos" ? "emitido" : "recibido";
+  ): Promise<string[]> {
     const { fiel } = inspectFiel(material.cer, material.key, material.password);
 
     const service = createService(fiel, this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
@@ -87,7 +88,7 @@ export class DescargaClient {
 
     // Descarga — one zip per package id.
     this.options.onPhase?.("descarga");
-    const cfdis: DownloadedCfdi[] = [];
+    const zips: string[] = [];
     for (const packageId of packageIds) {
       const result = await service.download(packageId);
       if (!result.getStatus().isAccepted()) {
@@ -95,9 +96,9 @@ export class DescargaClient {
           `SAT rechazó la descarga del paquete ${packageId}: ${result.getStatus().getMessage()}`,
         );
       }
-      cfdis.push(...(await extractCfdisFromZip(result.getPackageContent(), cfdiTipo)));
+      zips.push(result.getPackageContent());
     }
-    return cfdis;
+    return zips;
   }
 }
 

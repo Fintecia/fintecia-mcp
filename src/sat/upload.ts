@@ -1,30 +1,31 @@
-import type { DownloadedCfdi } from "./parse.js";
-
 /**
- * Client for the frozen Fintecia upload endpoint (contrato congelado).
+ * Client for the Fintecia upload endpoint. The MCP uploads the ZIP it
+ * downloaded from the SAT (DescargaMasiva) as base64 — the backend reuses its
+ * own ingest path (`ingestZipBuffer`, same as the web app's `processCfdiZip`).
+ * No XML extraction happens in this client.
  *
  *   POST /api/v1/mcp/cfdi/upload
  *   Authorization: Bearer <idToken>
- *   body: { taxpayerRfc, cfdis: Array<{uuid,emisorRfc,receptorRfc,total,fecha,tipo,xml}> }
- *   response: { accepted: number, rejected: Array<{uuid,reason}> }
- *
- * The backend is built in parallel in another repo; this client codes against
- * the frozen contract exactly. `fetch` is injectable for tests (no nodecfdi).
+ *   body: { taxpayerRfc, zipBase64 }
+ *   response: { accepted, rejected:[{folioFiscal,reason}], totalFiles, duplicates, ignored }
  */
 
 export interface UploadRejection {
-  uuid: string;
+  folioFiscal: string | null;
   reason: string;
 }
 
 export interface UploadResponse {
   accepted: number;
   rejected: UploadRejection[];
+  totalFiles?: number;
+  duplicates?: number;
+  ignored?: number;
 }
 
-export interface UploadBatch {
+export interface UploadZip {
   taxpayerRfc: string;
-  cfdis: DownloadedCfdi[];
+  zipBase64: string;
 }
 
 export interface UploadClientConfig {
@@ -44,7 +45,7 @@ export class UploadClient {
     return fn(input, init);
   }
 
-  async upload(batch: UploadBatch): Promise<UploadResponse> {
+  async upload(zip: UploadZip): Promise<UploadResponse> {
     const res = await this.fetch(
       `${this.config.baseUrl}/api/v1/mcp/cfdi/upload`,
       {
@@ -53,7 +54,7 @@ export class UploadClient {
           "content-type": "application/json",
           authorization: `Bearer ${this.config.idToken}`,
         },
-        body: JSON.stringify(batch),
+        body: JSON.stringify(zip),
       },
     );
     if (!res.ok) {
@@ -63,7 +64,7 @@ export class UploadClient {
   }
 }
 
-/** Validate + normalize the frozen upload response shape. */
+/** Validate + normalize the upload response shape. */
 export function parseUploadResponse(body: unknown): UploadResponse {
   if (typeof body !== "object" || body === null) {
     throw new Error("respuesta de upload inválida");
@@ -81,15 +82,24 @@ export function parseUploadResponse(body: unknown): UploadResponse {
     if (typeof item !== "object" || item === null) {
       throw new Error(`respuesta de upload: rejected[${i}] inválido`);
     }
-    const { uuid, reason } = item as { uuid?: unknown; reason?: unknown };
-    if (typeof uuid !== "string" || uuid === "") {
-      throw new Error(`respuesta de upload: rejected[${i}].uuid inválido`);
-    }
+    const { folioFiscal, reason } = item as { folioFiscal?: unknown; reason?: unknown };
     if (typeof reason !== "string") {
       throw new Error(`respuesta de upload: rejected[${i}].reason inválido`);
     }
-    return { uuid, reason };
+    return { folioFiscal: folioFiscal == null ? null : String(folioFiscal), reason };
   });
 
-  return { accepted, rejected: items };
+  const { totalFiles, duplicates, ignored } = body as {
+    totalFiles?: unknown;
+    duplicates?: unknown;
+    ignored?: unknown;
+  };
+
+  return {
+    accepted,
+    rejected: items,
+    ...(typeof totalFiles === "number" ? { totalFiles } : {}),
+    ...(typeof duplicates === "number" ? { duplicates } : {}),
+    ...(typeof ignored === "number" ? { ignored } : {}),
+  };
 }

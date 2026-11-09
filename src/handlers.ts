@@ -7,10 +7,9 @@ import {
   validateDownloadArgs,
   type DescargaTipo,
   type DownloadPhase,
-  type DownloadedCfdi,
   type DownloadArgs,
 } from "./sat/parse.js";
-import { UploadClient } from "./sat/upload.js";
+import { UploadClient, type UploadRejection } from "./sat/upload.js";
 import {
   InMemoryFielProvider,
   type FielMaterial,
@@ -240,17 +239,17 @@ async function runDownloadJob(
     onPhase: (phase: DownloadPhase) => jobStore.update(job.jobId, { phase }),
   });
 
-  const all: DownloadedCfdi[] = [];
+  const all: string[] = [];
   for (const tipo of tipos) {
-    const cfdis = await client.descargar(
+    const zips = await client.descargar(
       material,
       { desde: args.desde, hasta: args.hasta },
       tipo,
     );
-    all.push(...cfdis);
+    all.push(...zips);
   }
 
-  // No invoices → nothing to upload; complete the job as an empty result.
+  // No packages → nothing to upload; complete the job as an empty result.
   if (all.length === 0) {
     jobStore.update(job.jobId, {
       status: "completed",
@@ -271,7 +270,7 @@ async function runDownloadJob(
     result: {
       accepted: uploadResult.accepted,
       rejected: uploadResult.rejected.length,
-      cfdiCount: all.length,
+      cfdiCount: uploadResult.totalFiles,
     },
   });
 }
@@ -279,19 +278,29 @@ async function runDownloadJob(
 async function uploadBatch(
   deps: HandlerDeps,
   taxpayerRfc: string,
-  cfdis: DownloadedCfdi[],
-): Promise<{ accepted: number; rejected: Array<{ uuid: string; reason: string }> }> {
+  zips: string[],
+): Promise<{ accepted: number; rejected: UploadRejection[]; totalFiles: number }> {
   if (!deps.uploadBaseUrl) {
     throw new Error("uploadBaseUrl no configurado (definí FINTECIA_API_URL)");
   }
   const idToken = await (deps.getAuthToken?.() ?? Promise.resolve(null));
   if (!idToken) {
-    throw new Error("No autenticado: falta el idToken del device flow (T3)");
+    throw new Error("No autenticado: falta el idToken (loopback / fintecia_login)");
   }
   const client = new UploadClient({
     baseUrl: deps.uploadBaseUrl,
     idToken,
     fetchFn: deps.fetchFn,
   });
-  return client.upload({ taxpayerRfc, cfdis });
+
+  let accepted = 0;
+  let totalFiles = 0;
+  const rejected: UploadRejection[] = [];
+  for (const zip of zips) {
+    const result = await client.upload({ taxpayerRfc, zipBase64: zip });
+    accepted += result.accepted;
+    totalFiles += result.totalFiles ?? 0;
+    rejected.push(...result.rejected);
+  }
+  return { accepted, rejected, totalFiles };
 }
