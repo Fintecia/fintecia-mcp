@@ -1,5 +1,9 @@
 # fintecia-mcp
 
+[![CI](https://github.com/Fintecia/fintecia-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Fintecia/fintecia-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-green.svg)](https://nodejs.org)
+
 MCP server local de **Fintecia** — descarga de CFDI con e-firma local, conciliación
 banco↔CFDI, riesgo 69-B/EFOS y deducibilidad fiscal, para agentes (Claude, ChatGPT, Cursor).
 
