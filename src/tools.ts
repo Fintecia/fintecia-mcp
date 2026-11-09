@@ -191,11 +191,10 @@ export const TOOLS: ToolDef[] = [
     name: "fintecia_deductibility",
     description:
       "Per-expense deductibility verdict: CFDI valid + paid via bank (not cash) + " +
-      "supplier not on 69-B + indispensable. Materialized by Fintecia. Returns " +
-      "deducible / no deducible / en riesgo / pendiente with evidence.",
+      "supplier not on 69-B. Materialized by Fintecia. Returns deducible / no " +
+      "deducible / en riesgo / pendiente with evidence.",
     inputSchema: z.object({
-      desde: z.string().optional().describe("YYYY-MM-DD."),
-      hasta: z.string().optional().describe("YYYY-MM-DD."),
+      taxpayerRfc: z.string().describe("RFC del contribuyente."),
     }),
     annotations: { readOnlyHint: true },
   },

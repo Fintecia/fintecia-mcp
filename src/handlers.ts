@@ -262,10 +262,13 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
     );
   });
 
+  handlers.set("fintecia_deductibility", async (input) => {
+    const taxpayerRfc = String(input.taxpayerRfc ?? "");
+    return json(await readClient.read("/api/v1/mcp/deductibility", taxpayerRfc));
+  });
+
   // Everything else keeps a stub until its task lands.
-  for (const name of [
-    "fintecia_deductibility",
-  ]) {
+  for (const name of [] as string[]) {
     if (!handlers.has(name)) handlers.set(name, stub(name));
   }
 
