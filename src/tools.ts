@@ -129,12 +129,13 @@ export const TOOLS: ToolDef[] = [
       "Search/view emitted and received invoices. Use to inspect WHICH transactions " +
       "are behind a number; never to sum totals.",
     inputSchema: z.object({
-      tipo: z.enum(["emitidos", "recibidos", "ambos"]).optional(),
-      desde: z.string().optional().describe("YYYY-MM-DD."),
-      hasta: z.string().optional().describe("YYYY-MM-DD."),
+      taxpayerRfc: z.string().describe("RFC del contribuyente."),
+      query: z.string().optional().describe("Texto a buscar (razón social, UUID, etc.)."),
       emisorRfc: z.string().optional(),
       receptorRfc: z.string().optional(),
-      uuid: z.string().optional().describe("Folio fiscal exacto."),
+      fechaStart: z.string().optional().describe("YYYY-MM-DD."),
+      fechaEnd: z.string().optional().describe("YYYY-MM-DD."),
+      limit: z.number().int().min(1).max(100).optional(),
     }),
     annotations: { readOnlyHint: true },
   },
