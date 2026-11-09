@@ -16,6 +16,7 @@ import {
   type FielProvider,
 } from "./sat/fielProvider.js";
 import { InMemoryJobStore, type DownloadJob, type JobStore } from "./sat/jobs.js";
+import { ReadClient } from "./fin/read.js";
 
 /**
  * Tool handlers. Real implementations are wired here as they land (T1b+);
@@ -84,6 +85,12 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
   const debts = loadDebts();
   const fielProvider = deps.fielProvider ?? new InMemoryFielProvider();
   const jobStore = deps.jobStore ?? new InMemoryJobStore();
+
+  const readClient = new ReadClient({
+    baseUrl: deps.uploadBaseUrl ?? "",
+    getAuthToken: deps.getAuthToken ?? (async () => null),
+    fetchFn: deps.fetchFn,
+  });
 
   const handlers = new Map<string, ToolHandler>();
 
@@ -201,13 +208,27 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
     });
   });
 
+  handlers.set("fintecia_financials", async (input) => {
+    const taxpayerRfc = String(input.taxpayerRfc ?? "");
+    return json(
+      await readClient.read("/api/v1/mcp/financials", taxpayerRfc, {
+        ...(typeof input.hasta === "string"
+          ? { periodKey: input.hasta.slice(0, 7) }
+          : {}),
+      }),
+    );
+  });
+
+  handlers.set("fintecia_reconciliation", async (input) => {
+    const taxpayerRfc = String(input.taxpayerRfc ?? "");
+    return json(await readClient.read("/api/v1/mcp/reconciliation", taxpayerRfc));
+  });
+
   // Everything else keeps a stub until its task lands.
   for (const name of [
     "fintecia_profile",
     "fintecia_transactions",
     "fintecia_cfdi",
-    "fintecia_financials",
-    "fintecia_reconciliation",
     "fintecia_tax_summary",
     "fintecia_risk_report",
     "fintecia_risk_check",

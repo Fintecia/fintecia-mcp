@@ -144,6 +144,7 @@ export const TOOLS: ToolDef[] = [
       "Materialized balances + ratios, computed by Fintecia. Use ALWAYS to answer " +
       "'how much' — never recompute from raw transactions.",
     inputSchema: z.object({
+      taxpayerRfc: z.string().describe("RFC del contribuyente a consultar."),
       hasta: z.string().optional().describe("Corte (YYYY-MM-DD), default hoy."),
     }),
     annotations: { readOnlyHint: true },
@@ -151,7 +152,9 @@ export const TOOLS: ToolDef[] = [
   {
     name: "fintecia_reconciliation",
     description: "Bank↔CFDI reconciliation status: matched, suggested, pending approval, unmatched.",
-    inputSchema: z.object({}),
+    inputSchema: z.object({
+      taxpayerRfc: z.string().describe("RFC del contribuyente a consultar."),
+    }),
     annotations: { readOnlyHint: true },
   },
   {
