@@ -16,10 +16,12 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "test:smoke": "tsx test/smoke/fiel.smoke.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.3.0",
+    "@nodecfdi/sat-ws-descarga-masiva": "^2.0.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
