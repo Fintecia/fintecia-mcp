@@ -8,6 +8,8 @@ import { inspectFiel } from "../fiel/fiel.js";
 import type { FielStore } from "../fiel/store.js";
 import { FIREBASE_WEB_CONFIG } from "../auth/firebaseConfig.js";
 import { SessionStore, type AuthSession } from "../auth/session.js";
+import { type Keychain, detectKeychain } from "../keychain/keychain.js";
+import { saveFielPassword } from "../sat/keychainFielProvider.js";
 
 /**
  * Onboarding web-local server (127.0.0.1 only). Two responsibilities:
@@ -117,6 +119,7 @@ export function startOnboardServer(
   store: FielStore,
   session: SessionStore = new SessionStore(),
   onAuth: (s: AuthSession) => void = () => {},
+  keychain: Keychain = detectKeychain(process.platform),
 ): Promise<{ server: Server; url: string }> {
   return new Promise((resolve) => {
     const server = createServer(
@@ -161,6 +164,7 @@ export function startOnboardServer(
             };
             const { info } = inspectFiel(cer, key, password);
             await store.store({ rfc: info.rfc, certPem: info.pem, keyPem: key });
+            await saveFielPassword(keychain, info.rfc, password);
             send(200, { ok: true, rfc: info.rfc });
           } catch (err) {
             send(400, { ok: false, error: (err as Error).message });

@@ -7,6 +7,8 @@ import { createHandlers } from "./handlers.js";
 import { SessionStore } from "./auth/session.js";
 import { FileFielStore } from "./fiel/store.js";
 import { startOnboardServer } from "./onboard/server.js";
+import { detectKeychain } from "./keychain/keychain.js";
+import { KeychainFielProvider } from "./sat/keychainFielProvider.js";
 
 /**
  * Fintecia MCP server — local, read-only (+ local e-firma download).
@@ -21,10 +23,15 @@ function createServer(): McpServer {
   const server = new McpServer({ name: "fintecia-mcp", version: "0.1.0" });
   const session = new SessionStore();
   const fielStore = new FileFielStore();
+  const fielProvider = new KeychainFielProvider(
+    fielStore,
+    detectKeychain(process.platform),
+  );
 
   let onboard: { server: Server; url: string } | null = null;
 
   const handlers = createHandlers({
+    fielProvider,
     uploadBaseUrl: process.env.FINTECIA_API_URL,
     getAuthToken: async () => session.idToken,
   });
