@@ -162,6 +162,7 @@ export const TOOLS: ToolDef[] = [
     name: "fintecia_tax_summary",
     description: "Materialized ISR/IVA summary per period (computed by Fintecia).",
     inputSchema: z.object({
+      taxpayerRfc: z.string().describe("RFC del contribuyente."),
       periodo: z.string().describe("Periodo, ej. '2026-11'."),
     }),
     annotations: { readOnlyHint: true },

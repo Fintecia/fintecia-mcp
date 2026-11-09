@@ -41,4 +41,24 @@ export class ReadClient {
     }
     return res.json();
   }
+
+  /** Read an endpoint that needs NO taxpayerRfc (e.g. profile, by uid). */
+  async readRaw(path: string): Promise<unknown> {
+    const idToken = await this.config.getAuthToken();
+    if (!idToken) {
+      throw new Error("no autenticado (fintecia_login)");
+    }
+    const res = await this.fetch(`${this.config.baseUrl}${path}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) {
+      throw new Error(`read ${path} failed: ${res.status}`);
+    }
+    return res.json();
+  }
 }

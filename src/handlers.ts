@@ -235,11 +235,21 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
     return json(await readClient.read("/api/v1/mcp/risk-report", taxpayerRfc));
   });
 
+  handlers.set("fintecia_profile", async () => {
+    return json(await readClient.readRaw("/api/v1/mcp/profile"));
+  });
+
+  handlers.set("fintecia_tax_summary", async (input) => {
+    const taxpayerRfc = String(input.taxpayerRfc ?? "");
+    const periodKey = String(input.periodo ?? "");
+    return json(
+      await readClient.read("/api/v1/mcp/tax-summary", taxpayerRfc, { periodKey }),
+    );
+  });
+
   // Everything else keeps a stub until its task lands.
   for (const name of [
-    "fintecia_profile",
     "fintecia_transactions",
-    "fintecia_tax_summary",
     "fintecia_risk_check",
     "fintecia_deductibility",
   ]) {
