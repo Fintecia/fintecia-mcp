@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Smoke tests (nodecfdi ESM)
+        run: npm run test:smoke
+
+      - name: Build
+        run: npm run build
+
+      # Hard gate on high+ severity. Low severity (e.g. jest's dev-only
+      # deepmerge) does NOT block; it is tracked and re-triaged on bump.
+      - name: Audit dependencies (npm)
+        run: npm audit --audit-level=high
