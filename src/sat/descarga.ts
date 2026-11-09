@@ -1,5 +1,4 @@
 import {
-  CfdiPackageReader,
   DateTimePeriod,
   DocumentStatus,
   DownloadType,
@@ -13,10 +12,7 @@ import {
 import { inspectFiel } from "../fiel/fiel.js";
 import type { FielMaterial } from "./fielProvider.js";
 import {
-  parseCfdiXml,
-  type CfdiTipo,
   type DescargaTipo,
-  type DownloadedCfdi,
   type DownloadPhase,
   type Period,
 } from "./parse.js";
@@ -125,17 +121,6 @@ export function buildQueryParameters(periodo: Period, tipo: DescargaTipo): Query
     parameters.withDocumentStatus(new DocumentStatus("active"));
   }
   return parameters;
-}
-
-/** Decode a base64 zip and extract parsed CFDI XMLs via nodecfdi's reader. */
-export async function extractCfdisFromZip(
-  base64Zip: string,
-  tipo: CfdiTipo,
-): Promise<DownloadedCfdi[]> {
-  const binary = Buffer.from(base64Zip, "base64").toString("binary");
-  const reader = await CfdiPackageReader.createFromContents(binary);
-  const items = await reader.cfdisToArray();
-  return items.map((item) => parseCfdiXml(item.content, tipo));
 }
 
 async function pollPackages(
