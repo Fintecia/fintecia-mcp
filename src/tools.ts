@@ -172,8 +172,7 @@ export const TOOLS: ToolDef[] = [
       "Cross ALL counterparties against the SAT 69-B/69 lists, with severity and " +
       "amounts billed to each. Materialized by Fintecia.",
     inputSchema: z.object({
-      desde: z.string().optional().describe("YYYY-MM-DD."),
-      hasta: z.string().optional().describe("YYYY-MM-DD."),
+      taxpayerRfc: z.string().describe("RFC del contribuyente."),
     }),
     annotations: { readOnlyHint: true },
   },
