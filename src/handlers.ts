@@ -16,6 +16,11 @@ import {
   type FielProvider,
 } from "./sat/fielProvider.js";
 import { InMemoryJobStore, type DownloadJob, type JobStore } from "./sat/jobs.js";
+import {
+  FileDownloadArtifactStore,
+  buildRequestKey,
+  type DownloadArtifactStore,
+} from "./sat/artifacts.js";
 import { ReadClient } from "./fin/read.js";
 
 /**
@@ -35,6 +40,8 @@ export interface HandlerDeps {
   fielProvider?: FielProvider;
   /** Download job registry (in-memory in T2). */
   jobStore?: JobStore;
+  /** Disk persistence for downloaded packages (retry without re-downloading). */
+  artifactStore?: DownloadArtifactStore;
   /** Fintecia backend base URL for the upload endpoint (FINTECIA_API_URL). */
   uploadBaseUrl?: string;
   /** Resolves the current Firebase ID token (T3 wires the device-flow session). */
@@ -298,6 +305,9 @@ async function runDownloadJob(
   const { deps, jobStore } = ctx;
   const { DescargaClient } = await import("./sat/descarga.js");
 
+  const artifactStore = deps.artifactStore ?? new FileDownloadArtifactStore();
+  const requestKey = buildRequestKey(args.rfc, args.desde, args.hasta);
+
   const tipos: DescargaTipo[] =
     args.tipo === "ambos" ? ["emitidos", "recibidos"] : [args.tipo];
 
@@ -307,11 +317,23 @@ async function runDownloadJob(
 
   const all: string[] = [];
   for (const tipo of tipos) {
+    // Retry without re-downloading: reuse packages persisted by a prior run
+    // whose upload failed (the SAT limits re-downloads, so they must survive).
+    const persisted = await artifactStore.load(requestKey, tipo);
+    if (persisted.length > 0) {
+      all.push(...persisted);
+      continue;
+    }
     const zips = await client.descargar(
       material,
       { desde: args.desde, hasta: args.hasta },
       tipo,
     );
+    // Persist to disk BEFORE upload (L22): a failed upload must not lose the
+    // real SAT download.
+    for (let i = 0; i < zips.length; i++) {
+      await artifactStore.save(requestKey, tipo, i, zips[i]);
+    }
     all.push(...zips);
   }
 
@@ -339,6 +361,15 @@ async function runDownloadJob(
       cfdiCount: uploadResult.totalFiles,
     },
   });
+
+  // Uploaded + materialized in Fintecia: drop the local copies (data
+  // minimization). Best-effort — a failed cleanup is stale data, not a job
+  // failure.
+  try {
+    await artifactStore.remove(requestKey);
+  } catch (err) {
+    console.error("fintecia-mcp: no se pudieron borrar los zips temporales:", err);
+  }
 }
 
 async function uploadBatch(

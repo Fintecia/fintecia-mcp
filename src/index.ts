@@ -10,6 +10,7 @@ import { FileFielStore } from "./fiel/store.js";
 import { startOnboardServer } from "./onboard/server.js";
 import { detectKeychain } from "./keychain/keychain.js";
 import { KeychainFielProvider } from "./sat/keychainFielProvider.js";
+import { API_BASE_URL } from "./auth/firebaseConfig.js";
 
 /**
  * Fintecia MCP server — local, read-only (+ local e-firma download).
@@ -29,13 +30,13 @@ function createServer(): McpServer {
     detectKeychain(process.platform),
   );
 
-  const telemetry = new TelemetryClient({ baseUrl: process.env.FINTECIA_API_URL });
+  const telemetry = new TelemetryClient({ baseUrl: API_BASE_URL });
 
   let onboard: { server: Server; url: string } | null = null;
 
   const handlers = createHandlers({
     fielProvider,
-    uploadBaseUrl: process.env.FINTECIA_API_URL,
+    uploadBaseUrl: API_BASE_URL,
     getAuthToken: async () => session.idToken,
   });
 

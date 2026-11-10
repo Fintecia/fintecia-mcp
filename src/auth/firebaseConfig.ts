@@ -12,6 +12,48 @@ export const isLocal = FIREBASE_ENV === 'local';
 export const AUTH_EMULATOR_URL =
   process.env.FIREBASE_AUTH_EMULATOR ?? 'http://127.0.0.1:9099';
 
+/**
+ * Fintecia backend base URL (no trailing slash), env-aware.
+ *
+ * The MCP talks to the backend over plain `fetch` (NOT the Firebase Functions
+ * SDK), so it must know the full base URL. `FINTECIA_API_URL` wins when set;
+ * otherwise the URL is derived from `FINTECIA_ENV` (mirrors the Flutter app's
+ * `Env`):
+ *   - local      → Functions emulator (project `demo-fintecia-dev`, from
+ *                  `.firebaserc`; the emulator only serves callables under its
+ *                  own project id — see `firebase_options.dart`)
+ *   - staging    → fintecia-staging.web.app
+ *   - production → app.fintecia.com.mx
+ *
+ * L22 bug: previously `FINTECIA_API_URL` was read raw with NO default, so a
+ * prod run failed with "uploadBaseUrl no configurado (definí FINTECIA_API_URL)".
+ */
+export function resolveApiBaseUrl(
+  env: string,
+  explicit?: string,
+  localOverride?: string,
+): string {
+  const trimmed = explicit?.trim();
+  if (trimmed) return trimmed.replace(/\/+$/, '');
+  switch (env) {
+    case 'local':
+      return (
+        localOverride?.trim() ||
+        'http://127.0.0.1:5001/demo-fintecia-dev/us-central1'
+      );
+    case 'staging':
+      return 'https://fintecia-staging.web.app';
+    default: // production and any unknown value → prod (fail safe to the real API)
+      return 'https://app.fintecia.com.mx';
+  }
+}
+
+export const API_BASE_URL = resolveApiBaseUrl(
+  FIREBASE_ENV,
+  process.env.FINTECIA_API_URL,
+  process.env.FINTECIA_LOCAL_API_URL,
+);
+
 export const FIREBASE_WEB_CONFIG = {
   apiKey: process.env.FIREBASE_API_KEY ?? 'AIzaSyAt1DR0jI8h9GqaPo8kaSwVNL_4Hb3IhL8',
   authDomain: process.env.FIREBASE_AUTH_DOMAIN ?? 'app.fintecia.com.mx',

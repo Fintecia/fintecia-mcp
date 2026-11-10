@@ -52,6 +52,17 @@ printf '%s\n' \
   | node dist/index.js
 ```
 
+## Variables de entorno
+
+La URL del backend se resuelve según el entorno (no hay que setear nada para el
+caso habitual); `FINTECIA_API_URL` siempre tiene prioridad si está definida.
+
+| Variable | Default | Uso |
+|---|---|---|
+| `FINTECIA_ENV` | `local` | `local` → emulador de Functions; `staging` → `fintecia-staging.web.app`; `production` → `app.fintecia.com.mx`. |
+| `FINTECIA_API_URL` | *(derivada de `FINTECIA_ENV`)* | Base URL del backend (sin slash final). Gana sobre el default. |
+| `FINTECIA_LOCAL_API_URL` | `http://127.0.0.1:5001/demo-fintecia-dev/us-central1` | Emulador de Functions en `local` (override). |
+
 ## Desarrollo
 
 ```bash
