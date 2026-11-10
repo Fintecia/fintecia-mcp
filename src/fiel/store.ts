@@ -7,8 +7,9 @@ import os from "node:os";
  *
  * Security model (S2): the .key is the private material and NEVER leaves the
  * machine nor is logged. The stored `.key` PEM is already password-encrypted
- * with the user's FIEL password (the password itself is NOT persisted — it is
- * re-entered per signing session). The .cer is public.
+ * with the user's FIEL password; the password itself is held ONLY in the OS
+ * keychain (never in the file store, never logged, never uploaded). The .cer
+ * is public.
  *
  * FileFielStore is the cross-platform base and the Linux fallback. The OS
  * keychain (macOS Keychain / Windows DPAPI / Linux libsecret) is a follow-up

@@ -34,6 +34,21 @@ try {
   });
   if (bad.status !== 400) throw new Error("expected 400 on corrupt key");
 
+  // /rfcs lists stored RFCs; /refiel re-persists the password without re-upload.
+  const rfcsRes = await fetch(`${url}/rfcs`);
+  const rfcs = (await rfcsRes.json()) as { rfcs: string[] };
+  if (!rfcs.rfcs.includes("ABC831011XYZ")) throw new Error(`rfcs missing: ${JSON.stringify(rfcs)}`);
+
+  const relinkRes = await fetch(`${url}/refiel`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ rfc: "ABC831011XYZ", password: "" }),
+  });
+  const relink = (await relinkRes.json()) as { ok: boolean; rfc?: string };
+  if (!relink.ok || relink.rfc !== "ABC831011XYZ") {
+    throw new Error(`refiel failed: ${JSON.stringify(relink)}`);
+  }
+
   console.log(`OK: onboard stored RFC=${body.rfc}`);
 } finally {
   server.close();

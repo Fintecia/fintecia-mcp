@@ -47,12 +47,12 @@ describe("keychain", () => {
     });
   });
 
-  test("KeychainFielProvider returns null when the password is missing", async () => {
+  test("KeychainFielProvider throws when FIEL is stored but password is missing", async () => {
     const provider = new KeychainFielProvider(
       mockStore(async () => ({ rfc: "ABC", certPem: "CER", keyPem: "KEY" })),
       noopKeychain,
     );
-    expect(await provider.load("abc")).toBeNull();
+    await expect(provider.load("abc")).rejects.toThrow(/contraseña no está en el keyring/);
   });
 
   test("KeychainFielProvider returns null when the FIEL is not stored", async () => {

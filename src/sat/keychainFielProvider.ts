@@ -20,7 +20,16 @@ export class KeychainFielProvider implements FielProvider {
     if (!creds) return null;
 
     const password = await this.keychain.get(fielKeychainKey(rfcUpper));
-    if (password === null) return null;
+    if (password === null) {
+      // The FIEL is registered but its password is missing from the keyring:
+      // a recoverable state, distinct from "no FIEL at all". Surface an
+      // actionable hint instead of the misleading "not registered" error.
+      throw new Error(
+        `La e-firma del RFC ${rfcUpper} está registrada, pero su contraseña no ` +
+          `está en el keyring. Volvé a correr fintecia_login para re-ingresarla ` +
+          `(vinculación T1b).`,
+      );
+    }
 
     return { cer: creds.certPem, key: creds.keyPem, password };
   }

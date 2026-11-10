@@ -1,10 +1,10 @@
 /**
  * FIEL material provider (T2).
  *
- * The FIEL password is NEVER persisted — it is re-entered per signing session.
- * `load(rfc)` returns the `.cer` + `.key` (password-encrypted PEM) plus the
- * password supplied for this session. The key/password must never be logged
- * nor leave the machine.
+ * The FIEL password is held ONLY in the OS keychain (never persisted in the
+ * file store, never logged, never uploaded). `load(rfc)` returns the `.cer` +
+ * `.key` (password-encrypted PEM) plus the keychain-held password for this
+ * session. The key/password must never be logged nor leave the machine.
  *
  * T1b wires the OS keychain / onboarding behind this same port; T2 ships only
  * the interface + a minimal in-memory implementation so the download flow is

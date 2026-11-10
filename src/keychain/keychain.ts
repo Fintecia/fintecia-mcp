@@ -87,13 +87,12 @@ class WinKeychain implements Keychain {
 /** Linux libsecret via `secret-tool`. */
 class LinuxKeychain implements Keychain {
   async set(key: string, secret: string): Promise<void> {
-    try {
-      execFileSync("secret-tool", [
-        "store", "--label=fintecia-mcp", "service", SERVICE, "account", key,
-      ], { input: secret });
-    } catch {
-      // secret-tool unavailable → password not persisted (re-prompt next time).
-    }
+    // Throw on failure (consistent with Mac/Win): the caller must surface the
+    // keyring error instead of silently dropping the password and leaving the
+    // FIEL in an unrecoverable "stored but no password" state.
+    execFileSync("secret-tool", [
+      "store", "--label=fintecia-mcp", "service", SERVICE, "account", key,
+    ], { input: secret });
   }
   async get(key: string): Promise<string | null> {
     try {

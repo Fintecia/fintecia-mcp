@@ -123,7 +123,18 @@ function html(config: Record<string, string>, localAuthUrl: string | null): stri
     <button type="submit" class="btn btn-primary">Guardar e-firma</button>
   </form>
   <div id="out" class="status"></div>
-  <p class="hint">La contraseña se usa para validar y se descarta. Nunca se guarda ni se sube.</p>
+  <p class="hint">La contraseña se guarda solo en el keyring del sistema (llaves del OS) para firmar tus descargas. Nunca se sube ni sale de esta máquina.</p>
+  </div>
+  <div id="relinkSection" style="display:none">
+    <hr class="divider">
+    <div class="step">Re-ingresar contraseña</div>
+    <p class="subtitle" style="margin:0 0 14px">Ya tenés una e-firma guardada. Si el agente te pide la contraseña, re-ingresala acá sin volver a subir los archivos.</p>
+    <label for="relinkRfc">RFC</label>
+    <select id="relinkRfc" class="file"></select>
+    <label for="relinkPass">Contraseña de la llave</label>
+    <input id="relinkPass" type="password" autocomplete="off" placeholder="••••••••">
+    <button id="relinkBtn" class="btn btn-primary">Guardar contraseña</button>
+    <div id="relinkOut" class="status"></div>
   </div>
 </div>
 
@@ -197,8 +208,15 @@ $("f").addEventListener("submit", async (e) => {
     });
     const body = await res.json();
     if (body.ok) {
-      status($("out"), "E-firma válida · RFC " + body.rfc + ". ¡Listo! Ya podés cerrar esta ventana y volver al agente para pedir tus facturas.", "ok");
-      $("f").style.display = "none";
+      const okMsg = "E-firma válida · RFC " + body.rfc + ". ¡Listo! Ya podés cerrar esta ventana y volver al agente para pedir tus facturas.";
+      if (body.passwordPersisted === false) {
+        status($("out"), "E-firma válida · RFC " + body.rfc + ". PERO no pude guardar la contraseña en el keyring (" + (body.keychainError || "keyring no disponible") + "). Re-ingresala abajo antes de firmar.", "err");
+        $("f").style.display = "none";
+        showRelink();
+      } else {
+        status($("out"), okMsg, "ok");
+        $("f").style.display = "none";
+      }
     } else {
       status($("out"), "No se pudo validar: " + (body.error || "error"), "err");
     }
@@ -206,6 +224,42 @@ $("f").addEventListener("submit", async (e) => {
     status($("out"), "No se pudo validar: " + String(err), "err");
   }
 });
+
+async function showRelink() {
+  try {
+    const res = await fetch("/rfcs");
+    const body = await res.json();
+    const rfcs = body.rfcs || [];
+    if (!rfcs.length) return;
+    $("relinkRfc").innerHTML = rfcs.map((r) => '<option value="' + r + '">' + r + '</option>').join("");
+    $("relinkSection").style.display = "block";
+  } catch {}
+}
+
+$("relinkBtn").addEventListener("click", async () => {
+  status($("relinkOut"), "Guardando contraseña…", "info");
+  try {
+    const rfc = $("relinkRfc").value;
+    const res = await fetch("/refiel", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ rfc, password: $("relinkPass").value }),
+    });
+    const body = await res.json();
+    if (body.ok && body.passwordPersisted !== false) {
+      status($("relinkOut"), "Contraseña guardada. ¡Listo! Ya podés cerrar esta ventana.", "ok");
+      $("relinkPass").value = "";
+    } else if (body.ok) {
+      status($("relinkOut"), "Contraseña válida pero NO pude guardarla en el keyring: " + (body.keychainError || "keyring no disponible"), "err");
+    } else {
+      status($("relinkOut"), "No se pudo: " + (body.error || "error"), "err");
+    }
+  } catch (err) {
+    status($("relinkOut"), "No se pudo: " + String(err), "err");
+  }
+});
+
+showRelink();
 </script></body></html>`;
 }
 
@@ -271,8 +325,53 @@ export function startOnboardServer(
             const key = decodeFileForFiel(keyB64, 'key');
             const { info } = inspectFiel(cer, key, password);
             await store.store({ rfc: info.rfc, certPem: info.pem, keyPem: key });
-            await saveFielPassword(keychain, info.rfc, password);
-            send(200, { ok: true, rfc: info.rfc });
+            // The FIEL is stored regardless; the keychain write is best-effort
+            // and reported separately so the user can act when the keyring is
+            // unavailable (instead of a silent "success" that breaks signing).
+            let passwordPersisted = true;
+            let keychainError: string | null = null;
+            try {
+              await saveFielPassword(keychain, info.rfc, password);
+            } catch (err) {
+              passwordPersisted = false;
+              keychainError = (err as Error).message;
+            }
+            send(200, { ok: true, rfc: info.rfc, passwordPersisted, keychainError });
+          } catch (err) {
+            send(400, { ok: false, error: (err as Error).message });
+          }
+          return;
+        }
+
+        if (req.method === "GET" && req.url === "/rfcs") {
+          send(200, { rfcs: await store.list() });
+          return;
+        }
+
+        if (req.method === "POST" && req.url === "/refiel") {
+          try {
+            const { rfc, password } = JSON.parse(await readBody(req)) as {
+              rfc: string;
+              password: string;
+            };
+            const creds = await store.load(rfc);
+            if (!creds) {
+              send(404, { ok: false, error: `No hay e-firma guardada para el RFC ${rfc}` });
+              return;
+            }
+            // Re-validate the stored .cer/.key against the re-entered password,
+            // then re-persist the password (the keychain write may have failed
+            // on the original onboarding).
+            const { info } = inspectFiel(creds.certPem, creds.keyPem, password);
+            let passwordPersisted = true;
+            let keychainError: string | null = null;
+            try {
+              await saveFielPassword(keychain, info.rfc, password);
+            } catch (err) {
+              passwordPersisted = false;
+              keychainError = (err as Error).message;
+            }
+            send(200, { ok: true, rfc: info.rfc, passwordPersisted, keychainError });
           } catch (err) {
             send(400, { ok: false, error: (err as Error).message });
           }
