@@ -5,8 +5,9 @@ import { readFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-const cer = readFileSync(path.resolve("test/fixtures/fiel.cer"), "utf8");
-const key = readFileSync(path.resolve("test/fixtures/fiel.key"), "utf8");
+// The browser reads files as base64 (binary-safe) and POSTs cerB64/keyB64.
+const cerB64 = readFileSync(path.resolve("test/fixtures/fiel.cer")).toString("base64");
+const keyB64 = readFileSync(path.resolve("test/fixtures/fiel.key")).toString("base64");
 
 const dir = mkdtempSync(path.join(tmpdir(), "onboard-"));
 const store = new FileFielStore(dir);
@@ -16,7 +17,7 @@ try {
   const res = await fetch(`${url}/fiel`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ cer, key, password: "" }),
+    body: JSON.stringify({ cerB64, keyB64, password: "" }),
   });
   const body = (await res.json()) as { ok: boolean; rfc?: string; error?: string };
   if (!body.ok || body.rfc !== "ABC831011XYZ") {
@@ -25,11 +26,11 @@ try {
   const stored = await store.load("ABC831011XYZ");
   if (!stored) throw new Error("FIEL not stored after onboarding");
 
-  // A wrong password must be rejected, not stored.
+  // A corrupt key must be rejected, not stored.
   const bad = await fetch(`${url}/fiel`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ cer, key: "corrupt", password: "" }),
+    body: JSON.stringify({ cerB64, keyB64: Buffer.from("corrupt").toString("base64"), password: "" }),
   });
   if (bad.status !== 400) throw new Error("expected 400 on corrupt key");
 
