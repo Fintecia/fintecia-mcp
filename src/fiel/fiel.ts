@@ -1,3 +1,4 @@
+import { X509Certificate } from "node:crypto";
 import { Fiel } from "@nodecfdi/sat-ws-descarga-masiva";
 
 /**
@@ -16,6 +17,8 @@ export interface FielInfo {
   rfc: string;
   serial: string;
   pem: string;
+  /** Legal name (razón social / nombre) from the certificate's CN, if present. */
+  razonSocial: string | null;
   isValid: boolean;
 }
 
@@ -28,6 +31,21 @@ export interface InspectedFiel {
  * Build a nodecfdi Fiel from cert + key + passPhrase and extract its public
  * identity (RFC, serial). Throws when the FIEL is invalid or expired.
  */
+/**
+ * Extract the holder's legal name (razón social / nombre) from the subject's
+ * CN. The RFC lives in `x500UniqueIdentifier` (OID 2.5.4.45), NOT the CN —
+ * the CN carries the name. Returns null when the CN is absent.
+ */
+export function extractRazonSocial(certPem: string): string | null {
+  try {
+    const subject = new X509Certificate(certPem).subject;
+    const m = subject.match(/^CN=([^\n]+)/m);
+    return m ? m[1].trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 export function inspectFiel(
   certPem: string,
   keyPem: string,
@@ -39,12 +57,15 @@ export function inspectFiel(
     throw new Error("FIEL inválida o vencida");
   }
 
+  const pem = fiel.getCertificatePemContents();
+
   return {
     fiel,
     info: {
       rfc: fiel.getRfc(),
       serial: fiel.getCertificateSerial(),
-      pem: fiel.getCertificatePemContents(),
+      pem,
+      razonSocial: extractRazonSocial(pem),
       isValid: true,
     },
   };

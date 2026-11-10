@@ -82,9 +82,12 @@ export const TOOLS: ToolDef[] = [
     description:
       "Download CFDIs from the SAT for a period using the LOCAL e-firma (never " +
       "uploaded to Fintecia). Use the rfc from fintecia_efirmas. Emitidos = " +
-      "invoices you issued; recibidos = invoices you received. Async: returns a " +
-      "jobId; poll cfdi_download_status until it completes. Only the resulting " +
-      "CFDIs are uploaded to Fintecia (the .cer/.key/password never leave the machine).",
+      "invoices you issued; recibidos = invoices you received. Runs in the " +
+      "background and takes a few minutes (the SAT prepares packages async): " +
+      "returns a jobId immediately, then poll cfdi_download_status until it " +
+      "completes and tell the user when their CFDIs are ready. Only the " +
+      "resulting CFDIs are uploaded to Fintecia (the .cer/.key/password never " +
+      "leave the machine).",
     inputSchema: z.object({
       tipo: z.enum(["emitidos", "recibidos", "ambos"]).describe("Qué descargar."),
       desde: z.string().describe("Fecha de inicio (YYYY-MM-DD)."),
@@ -99,8 +102,10 @@ export const TOOLS: ToolDef[] = [
     name: "cfdi_download_status",
     description:
       "Poll a DescargaMasiva job (autentica → verificacion → descarga → upload). " +
-      "When status is 'completed', the CFDIs are in Fintecia — read them with the " +
-      "fintecia_* tools. If 'failed', surface the error to the user.",
+      "Re-check every ~30 seconds while it is 'running'. When status is " +
+      "'completed', tell the user their CFDIs were downloaded and processed, " +
+      "then read them with the fintecia_* tools. If 'failed', surface the error " +
+      "to the user.",
     inputSchema: z.object({
       jobId: z.string().describe("ID del job devuelto por cfdi_download."),
     }),

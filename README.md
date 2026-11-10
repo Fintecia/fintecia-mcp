@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-green.svg)](https://nodejs.org)
 
-Servidor MCP **local** de [Fintecia](https://app.fintecia.com.mx) para agentes de IA
+Servidor MCP **local** de [Fintecia](https://fintecia.com.mx/?utm_source=mcp&utm_medium=referral&utm_campaign=fintecia_mcp&utm_content=readme) para agentes de IA
 (Claude, Cursor, ChatGPT, OpenCode y cualquier cliente MCP). Le da a tu agente acceso a
 tus facturas (CFDI), conciliación bancaria, riesgo fiscal (69-B / art. 69) y
 deducibilidad — descargando tus facturas directamente del SAT con tu **e-firma local**,

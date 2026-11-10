@@ -15,6 +15,7 @@ import {
   type FielMaterial,
   type FielProvider,
 } from "./sat/fielProvider.js";
+import { extractRazonSocial } from "./fiel/fiel.js";
 import { InMemoryJobStore, type DownloadJob, type JobStore } from "./sat/jobs.js";
 import {
   FileDownloadArtifactStore,
@@ -326,7 +327,10 @@ async function runDownloadJob(
             "content-type": "application/json",
             authorization: `Bearer ${idToken}`,
           },
-          body: JSON.stringify({ rfc: args.rfc }),
+          body: JSON.stringify({
+            rfc: args.rfc,
+            razonSocial: extractRazonSocial(material.cer) ?? undefined,
+          }),
         });
       } catch {
         // best-effort: the upload will surface the real error
