@@ -147,6 +147,16 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
 
   handlers.set("cfdi_download", async (input) => {
     const args = validateDownloadArgs(input);
+    // Gate BEFORE the (real, destructive) SAT download: without a loopback
+    // session the upload would fail anyway, and we must not burn a SAT
+    // DescargaMasiva request (and FIEL signing) on a request that can never
+    // complete.
+    const idToken = await (deps.getAuthToken?.() ?? Promise.resolve(null));
+    if (!idToken) {
+      throw new Error(
+        "Iniciá sesión primero (fintecia_login) antes de descargar CFDIs.",
+      );
+    }
     const material = await fielProvider.load(args.rfc);
     if (!material) {
       throw new Error(

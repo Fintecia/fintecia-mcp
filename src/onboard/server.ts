@@ -100,19 +100,22 @@ function html(config: Record<string, string>, localAuthUrl: string | null): stri
 </style>
 </head><body>
 <div class="card">
+  <div id="screenLogin">
   <div class="logo">F</div>
   <h1>Conectá tu cuenta</h1>
-  <p class="subtitle">Iniciá sesión con Google y subí tu e-firma para que el agente pueda leer tus facturas. Tus llaves nunca salen de esta máquina.</p>
+  <p class="subtitle">Iniciá sesión con Google para continuar. Tus llaves nunca salen de esta máquina.</p>
 
   <button id="signin" class="btn">
     <svg class="g" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.45a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.57-5.17 3.57-8.81z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.88-3c-1.08.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.95H1.28v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.29 14.29a7.2 7.2 0 0 1 0-4.58v-3.1H1.28a12 12 0 0 0 0 10.78l4.01-3.1z"/><path fill="#EA4335" d="M12 4.76c1.76 0 3.34.6 4.58 1.79l3.44-3.44A11.98 11.98 0 0 0 1.28 6.61l4.01 3.1C6.23 6.87 8.88 4.76 12 4.76z"/></svg>
     Iniciar sesión con Google
   </button>
   <div id="authStatus" class="status"></div>
+  </div>
 
-  <div id="efirmaSection" style="display:none">
-  <hr class="divider">
-  <div class="step">E-firma</div>
+  <div id="screenFirma" style="display:none">
+  <div class="logo">F</div>
+  <h1>Conectá tu e-firma</h1>
+  <p class="subtitle">Subí tu certificado y llave privada para que el agente pueda descargar tus facturas.</p>
   <form id="f">
     <label for="cer">Certificado (.cer)</label>
     <input class="file" id="cer" type="file" accept=".cer,.pem,.crt">
@@ -124,7 +127,6 @@ function html(config: Record<string, string>, localAuthUrl: string | null): stri
   </form>
   <div id="out" class="status"></div>
   <p class="hint">La contraseña se guarda solo en el keyring del sistema (llaves del OS) para firmar tus descargas. Nunca se sube ni sale de esta máquina.</p>
-  </div>
   <div id="relinkSection" style="display:none">
     <hr class="divider">
     <div class="step">Re-ingresar contraseña</div>
@@ -135,6 +137,7 @@ function html(config: Record<string, string>, localAuthUrl: string | null): stri
     <input id="relinkPass" type="password" autocomplete="off" placeholder="••••••••">
     <button id="relinkBtn" class="btn btn-primary">Guardar contraseña</button>
     <div id="relinkOut" class="status"></div>
+  </div>
   </div>
 </div>
 
@@ -161,10 +164,10 @@ $("signin").addEventListener("click", async () => {
     });
     const body = await res.json();
     if (body.ok) {
-      status($("authStatus"), "Sesión iniciada. Ahora subí tu e-firma.", "ok");
-      $("efirmaSection").style.display = "block";
-      $("signin").disabled = true;
-      $("signin").style.opacity = "0.6";
+      status($("authStatus"), "Sesión iniciada.", "ok");
+      $("screenLogin").style.display = "none";
+      $("screenFirma").style.display = "block";
+      showRelink();
     } else {
       status($("authStatus"), "No se pudo iniciar sesión: " + (body.error || "error"), "err");
     }
@@ -258,8 +261,6 @@ $("relinkBtn").addEventListener("click", async () => {
     status($("relinkOut"), "No se pudo: " + String(err), "err");
   }
 });
-
-showRelink();
 </script></body></html>`;
 }
 
@@ -315,6 +316,10 @@ export function startOnboardServer(
         }
 
         if (req.method === "POST" && req.url === "/fiel") {
+          if (!session.idToken) {
+            send(401, { ok: false, error: "iniciá sesión primero (Google)" });
+            return;
+          }
           try {
             const { cerB64, keyB64, password } = JSON.parse(await readBody(req)) as {
               cerB64: string;
@@ -344,11 +349,19 @@ export function startOnboardServer(
         }
 
         if (req.method === "GET" && req.url === "/rfcs") {
+          if (!session.idToken) {
+            send(401, { ok: false, error: "iniciá sesión primero (Google)" });
+            return;
+          }
           send(200, { rfcs: await store.list() });
           return;
         }
 
         if (req.method === "POST" && req.url === "/refiel") {
+          if (!session.idToken) {
+            send(401, { ok: false, error: "iniciá sesión primero (Google)" });
+            return;
+          }
           try {
             const { rfc, password } = JSON.parse(await readBody(req)) as {
               rfc: string;

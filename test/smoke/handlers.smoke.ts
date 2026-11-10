@@ -43,9 +43,23 @@ await rejects(
   /tipo/,
 );
 
-// cfdi_download rejects when no FIEL is registered for the RFC.
+// cfdi_download rejects when unauthenticated (before touching SAT / FIEL).
 await rejects(
-  createHandlers({ fielProvider: new InMemoryFielProvider() }).get("cfdi_download")!({
+  createHandlers().get("cfdi_download")!({
+    tipo: "emitidos",
+    desde: "2026-01-01",
+    hasta: "2026-01-31",
+    rfc: "AAA010101AAA",
+  }),
+  /Iniciá sesión primero/,
+);
+
+// cfdi_download rejects when no FIEL is registered for the RFC (with auth present).
+await rejects(
+  createHandlers({
+    fielProvider: new InMemoryFielProvider(),
+    getAuthToken: async () => "test-id-token",
+  }).get("cfdi_download")!({
     tipo: "emitidos",
     desde: "2026-01-01",
     hasta: "2026-01-31",

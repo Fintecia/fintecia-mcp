@@ -1,4 +1,5 @@
 import { execFile, execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -92,13 +93,13 @@ class LinuxKeychain implements Keychain {
     // FIEL in an unrecoverable "stored but no password" state.
     execFileSync("secret-tool", [
       "store", "--label=fintecia-mcp", "service", SERVICE, "account", key,
-    ], { input: secret });
+    ], { input: secret, env: secretToolEnv() });
   }
   async get(key: string): Promise<string | null> {
     try {
       const { stdout } = await execFileAsync("secret-tool", [
         "lookup", "service", SERVICE, "account", key,
-      ]);
+      ], { env: secretToolEnv() });
       return stdout.trim() || null;
     } catch {
       return null;
@@ -107,8 +108,30 @@ class LinuxKeychain implements Keychain {
   async delete(key: string): Promise<void> {
     await execFileAsync("secret-tool", [
       "clear", "service", SERVICE, "account", key,
-    ]).catch(() => {});
+    ], { env: secretToolEnv() }).catch(() => {});
   }
+}
+
+/**
+ * Environment for `secret-tool` calls. The MCP server often runs without the
+ * desktop session's `DBUS_SESSION_BUS_ADDRESS` (e.g. launched from a headless
+ * Inspector), so libsecret tries to autolaunch D-Bus — which needs X11
+ * `$DISPLAY` and fails with "Cannot autolaunch D-Bus without X11 $DISPLAY".
+ * Point it at the conventional systemd user bus instead when the socket exists.
+ */
+function secretToolEnv(): NodeJS.ProcessEnv {
+  if (process.env.DBUS_SESSION_BUS_ADDRESS) return process.env;
+  const uid = typeof process.getuid === "function" ? process.getuid() : undefined;
+  if (uid === undefined) return process.env;
+  const bus = `/run/user/${uid}/bus`;
+  try {
+    if (existsSync(bus)) {
+      return { ...process.env, DBUS_SESSION_BUS_ADDRESS: `unix:path=${bus}` };
+    }
+  } catch {
+    /* ignore — fall through to the unmodified env */
+  }
+  return process.env;
 }
 
 /** No keyring available (e.g. headless Linux): nothing is persisted. */

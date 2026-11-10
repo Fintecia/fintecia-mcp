@@ -1,6 +1,7 @@
 // Smoke test for the onboarding web-local server (runs via tsx; nodecfdi ESM).
 import { startOnboardServer } from "../../src/onboard/server.js";
 import { FileFielStore } from "../../src/fiel/store.js";
+import type { Keychain } from "../../src/keychain/keychain.js";
 import { readFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -9,11 +10,30 @@ import path from "node:path";
 const cerB64 = readFileSync(path.resolve("test/fixtures/fiel.cer")).toString("base64");
 const keyB64 = readFileSync(path.resolve("test/fixtures/fiel.key")).toString("base64");
 
+// Noop keychain: the smoke test must not pollute the real OS keyring.
+const noopKeychain: Keychain = {
+  set: async () => {},
+  get: async () => null,
+  delete: async () => {},
+};
+
 const dir = mkdtempSync(path.join(tmpdir(), "onboard-"));
 const store = new FileFielStore(dir);
-const { server, url } = await startOnboardServer(store);
+const { server, url } = await startOnboardServer(store, undefined, undefined, noopKeychain);
+
+const auth = async () => {
+  const res = await fetch(`${url}/auth`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ idToken: "test-id-token", refreshToken: "test-refresh" }),
+  });
+  const body = (await res.json()) as { ok: boolean };
+  if (!body.ok) throw new Error(`auth failed: ${JSON.stringify(body)}`);
+};
 
 try {
+  await auth();
+
   const res = await fetch(`${url}/fiel`, {
     method: "POST",
     headers: { "content-type": "application/json" },
