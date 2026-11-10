@@ -31,7 +31,7 @@ async function rejects(promise: Promise<unknown>, pattern: RegExp): Promise<void
 
 const handlers = createHandlers();
 
-for (const name of ["cfdi_download", "cfdi_download_status", "cfdi_sync_status"] as const) {
+for (const name of ["cfdi_download", "cfdi_download_status", "cfdi_sync_status", "fintecia_efirmas"] as const) {
   if (!handlers.has(name)) {
     throw new Error(`createHandlers no expone ${name}`);
   }
@@ -107,4 +107,17 @@ if (!/DEFINITIVO/.test(text(efosResult))) {
   throw new Error(`unexpected sat_efos_check output: ${text(efosResult)}`);
 }
 
-console.log("OK: cfdi_download / cfdi_download_status / cfdi_sync_status wiring");
+// fintecia_efirmas returns the list from the listEfirmas dep (empty by default).
+const efirmasEmpty = JSON.parse(text(await createHandlers().get("fintecia_efirmas")!({})));
+if (!Array.isArray(efirmasEmpty.efirmas)) {
+  throw new Error(`unexpected fintecia_efirmas: ${JSON.stringify(efirmasEmpty)}`);
+}
+const withList = createHandlers({
+  listEfirmas: async () => [{ rfc: "AAA010101AAA", hasPassword: true }],
+});
+const efirmasList = JSON.parse(text(await withList.get("fintecia_efirmas")!({})));
+if (efirmasList.efirmas[0]?.rfc !== "AAA010101AAA" || efirmasList.efirmas[0]?.hasPassword !== true) {
+  throw new Error(`unexpected fintecia_efirmas list: ${JSON.stringify(efirmasList)}`);
+}
+
+console.log("OK: cfdi_download / cfdi_download_status / cfdi_sync_status / fintecia_efirmas wiring");

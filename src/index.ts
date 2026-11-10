@@ -8,7 +8,7 @@ import { TelemetryClient } from "./telemetry/client.js";
 import { SessionStore } from "./auth/session.js";
 import { FileFielStore } from "./fiel/store.js";
 import { startOnboardServer } from "./onboard/server.js";
-import { detectKeychain } from "./keychain/keychain.js";
+import { detectKeychain, fielKeychainKey } from "./keychain/keychain.js";
 import { KeychainFielProvider } from "./sat/keychainFielProvider.js";
 import { API_BASE_URL } from "./auth/firebaseConfig.js";
 
@@ -16,19 +16,17 @@ import { API_BASE_URL } from "./auth/firebaseConfig.js";
  * Fintecia MCP server — local, read-only (+ local e-firma download).
  *
  * Auth is loopback OAuth: `fintecia_login` starts the local onboarding server
- * (127.0.0.1), the user signs in with Google (+ MFA) via the Firebase Web SDK,
- * and the tokens land back in the in-process SessionStore. The upload handler
- * reads the ID token from that store.
+ * (127.0.0.1), the user signs in with Google via the Firebase Web SDK, and the
+ * tokens land back in the in-process SessionStore. The upload handler reads the
+ * ID token from that store.
  */
 
 function createServer(): McpServer {
   const server = new McpServer({ name: "fintecia-mcp", version: "0.1.0" });
   const session = new SessionStore();
   const fielStore = new FileFielStore();
-  const fielProvider = new KeychainFielProvider(
-    fielStore,
-    detectKeychain(process.platform),
-  );
+  const keychain = detectKeychain(process.platform);
+  const fielProvider = new KeychainFielProvider(fielStore, keychain);
 
   const telemetry = new TelemetryClient({ baseUrl: API_BASE_URL });
 
@@ -38,6 +36,15 @@ function createServer(): McpServer {
     fielProvider,
     uploadBaseUrl: API_BASE_URL,
     getAuthToken: async () => session.idToken,
+    listEfirmas: async () => {
+      const rfcs = await fielStore.list();
+      return Promise.all(
+        rfcs.map(async (rfc) => ({
+          rfc,
+          hasPassword: (await keychain.get(fielKeychainKey(rfc))) !== null,
+        })),
+      );
+    },
   });
 
   const withTelemetry = (name: string, handler: ToolHandler): ToolHandler => {
@@ -84,8 +91,9 @@ function createServer(): McpServer {
     {
       description:
         "Start the local onboarding page (loopback OAuth) so the user can sign " +
-        "in with Google (+ MFA) and load their e-firma. Returns the local URL. " +
-        "The session is then available to the other fintecia_* tools.",
+        "in with Google and load their e-firma. Call this FIRST — the session " +
+        "is required by every authenticated tool. After the user finishes, call " +
+        "fintecia_efirmas to discover the registered e-firmas.",
       inputSchema: z.object({}),
       annotations: { readOnlyHint: true },
     },
@@ -100,7 +108,7 @@ function createServer(): McpServer {
             type: "text",
             text:
               `Abrí esta URL en tu navegador para iniciar sesión con Google ` +
-              `(+ MFA) y conectar tu e-firma:\n\n${onboard.url}`,
+              `y conectar tu e-firma:\n\n${onboard.url}`,
           },
         ],
       };

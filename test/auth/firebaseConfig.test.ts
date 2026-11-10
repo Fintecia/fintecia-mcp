@@ -7,10 +7,8 @@ describe("resolveApiBaseUrl", () => {
     );
   });
 
-  test("local defaults to the Functions emulator (demo-fintecia-dev)", () => {
-    expect(resolveApiBaseUrl("local")).toBe(
-      "http://127.0.0.1:5001/demo-fintecia-dev/us-central1",
-    );
+  test("local defaults to the Hosting emulator (serves /api/v1/* rewrites)", () => {
+    expect(resolveApiBaseUrl("local")).toBe("http://127.0.0.1:5000");
   });
 
   test("staging defaults to the staging web.app host", () => {

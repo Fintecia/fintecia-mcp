@@ -54,10 +54,13 @@ try {
   });
   if (bad.status !== 400) throw new Error("expected 400 on corrupt key");
 
-  // /rfcs lists stored RFCs; /refiel re-persists the password without re-upload.
-  const rfcsRes = await fetch(`${url}/rfcs`);
-  const rfcs = (await rfcsRes.json()) as { rfcs: string[] };
-  if (!rfcs.rfcs.includes("ABC831011XYZ")) throw new Error(`rfcs missing: ${JSON.stringify(rfcs)}`);
+  // /efirmas lists stored e-firmas (RFC + keyring password status); /refiel re-persists the password.
+  const efirmasRes = await fetch(`${url}/efirmas`);
+  const efirmas = (await efirmasRes.json()) as {
+    efirmas: Array<{ rfc: string; hasPassword: boolean }>;
+  };
+  const found = efirmas.efirmas.find((e) => e.rfc === "ABC831011XYZ");
+  if (!found) throw new Error(`efirmas missing: ${JSON.stringify(efirmas)}`);
 
   const relinkRes = await fetch(`${url}/refiel`, {
     method: "POST",

@@ -42,6 +42,8 @@ export interface HandlerDeps {
   jobStore?: JobStore;
   /** Disk persistence for downloaded packages (retry without re-downloading). */
   artifactStore?: DownloadArtifactStore;
+  /** Lists locally-registered e-firmas (RFC + keyring password status). */
+  listEfirmas?: () => Promise<Array<{ rfc: string; hasPassword: boolean }>>;
   /** Fintecia backend base URL for the upload endpoint (FINTECIA_API_URL). */
   uploadBaseUrl?: string;
   /** Resolves the current Firebase ID token (T3 wires the device-flow session). */
@@ -225,6 +227,11 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
     });
   });
 
+  handlers.set("fintecia_efirmas", async () => {
+    const efirmas = await (deps.listEfirmas?.() ?? Promise.resolve([]));
+    return json({ efirmas });
+  });
+
   handlers.set("fintecia_financials", async (input) => {
     const taxpayerRfc = String(input.taxpayerRfc ?? "");
     return json(
@@ -305,6 +312,28 @@ async function runDownloadJob(
   const { deps, jobStore } = ctx;
   const { DescargaClient } = await import("./sat/descarga.js");
 
+  // Ensure the taxpayer is linked in Fintecia before uploading (S3: "vincular
+  // cuenta↔taxpayer(RFC) [crear o unirse]"). The upload endpoint resolves the
+  // taxpayer by RFC and returns 404 when it doesn't exist. Idempotent (join or
+  // no-op when already linked); a failure here surfaces as a 404 on upload.
+  if (deps.uploadBaseUrl) {
+    const idToken = await (deps.getAuthToken?.() ?? Promise.resolve(null));
+    if (idToken) {
+      try {
+        await fetch(`${deps.uploadBaseUrl}/api/v1/mcp/taxpayer/link`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ rfc: args.rfc }),
+        });
+      } catch {
+        // best-effort: the upload will surface the real error
+      }
+    }
+  }
+
   const artifactStore = deps.artifactStore ?? new FileDownloadArtifactStore();
   const requestKey = buildRequestKey(args.rfc, args.desde, args.hasta);
 
@@ -362,14 +391,12 @@ async function runDownloadJob(
     },
   });
 
-  // Uploaded + materialized in Fintecia: drop the local copies (data
-  // minimization). Best-effort — a failed cleanup is stale data, not a job
-  // failure.
-  try {
-    await artifactStore.remove(requestKey);
-  } catch (err) {
-    console.error("fintecia-mcp: no se pudieron borrar los zips temporales:", err);
-  }
+  // KEEP the downloaded packages on disk after upload. The upload "success"
+  // is too coarse a signal: the backend pipeline (accounting) runs
+  // asynchronously AFTER the upload and can still fail (e.g. 0 journal
+  // entries). Keeping the zip lets a retry re-upload without re-downloading
+  // from the SAT (which limits re-downloads). Cleanup is a later concern —
+  // data safety beats disk hygiene here.
 }
 
 async function uploadBatch(

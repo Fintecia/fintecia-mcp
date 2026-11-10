@@ -9,7 +9,7 @@ import { decodeFileForFiel } from "../fiel/decode.js";
 import type { FielStore } from "../fiel/store.js";
 import { FIREBASE_WEB_CONFIG, isLocal, AUTH_EMULATOR_URL } from "../auth/firebaseConfig.js";
 import { SessionStore, type AuthSession } from "../auth/session.js";
-import { type Keychain, detectKeychain } from "../keychain/keychain.js";
+import { type Keychain, detectKeychain, fielKeychainKey } from "../keychain/keychain.js";
 import { saveFielPassword } from "../sat/keychainFielProvider.js";
 
 /**
@@ -97,6 +97,11 @@ function html(config: Record<string, string>, localAuthUrl: string | null): stri
   .status.info { background: #EDF3FC; color: var(--brand); }
   .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 18px; }
   .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0 0; }
+  .efirma-item { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .efirma-rfc { font-weight: 700; font-size: 15px; }
+  .efirma-status { font-size: 13px; margin: 4px 0 10px; }
+  .efirma-status.ok { color: var(--success); }
+  .efirma-status.warn { color: #B45309; }
 </style>
 </head><body>
 <div class="card">
@@ -112,7 +117,17 @@ function html(config: Record<string, string>, localAuthUrl: string | null): stri
   <div id="authStatus" class="status"></div>
   </div>
 
-  <div id="screenFirma" style="display:none">
+  <div id="screenList" style="display:none">
+  <div class="logo">F</div>
+  <h1>Tus e-firmas</h1>
+  <p class="subtitle">Estas son las e-firmas guardadas en esta máquina.</p>
+  <div id="efirmaList"></div>
+  <button id="addFirma" class="btn btn-primary">Agregar otra e-firma</button>
+  <p class="hint">Ya podés cerrar esta ventana y volver al agente para pedir tus facturas.</p>
+  <div id="listOut" class="status"></div>
+  </div>
+
+  <div id="screenAdd" style="display:none">
   <div class="logo">F</div>
   <h1>Conectá tu e-firma</h1>
   <p class="subtitle">Subí tu certificado y llave privada para que el agente pueda descargar tus facturas.</p>
@@ -125,19 +140,9 @@ function html(config: Record<string, string>, localAuthUrl: string | null): stri
     <input id="pass" type="password" autocomplete="off" placeholder="••••••••">
     <button type="submit" class="btn btn-primary">Guardar e-firma</button>
   </form>
+  <button id="backToList" class="btn" style="margin-top:12px">← Volver</button>
   <div id="out" class="status"></div>
   <p class="hint">La contraseña se guarda solo en el keyring del sistema (llaves del OS) para firmar tus descargas. Nunca se sube ni sale de esta máquina.</p>
-  <div id="relinkSection" style="display:none">
-    <hr class="divider">
-    <div class="step">Re-ingresar contraseña</div>
-    <p class="subtitle" style="margin:0 0 14px">Ya tenés una e-firma guardada. Si el agente te pide la contraseña, re-ingresala acá sin volver a subir los archivos.</p>
-    <label for="relinkRfc">RFC</label>
-    <select id="relinkRfc" class="file"></select>
-    <label for="relinkPass">Contraseña de la llave</label>
-    <input id="relinkPass" type="password" autocomplete="off" placeholder="••••••••">
-    <button id="relinkBtn" class="btn btn-primary">Guardar contraseña</button>
-    <div id="relinkOut" class="status"></div>
-  </div>
   </div>
 </div>
 
@@ -154,7 +159,7 @@ const status = (el, text, kind) => { el.textContent = text; el.className = "stat
 $("signin").addEventListener("click", async () => {
   status($("authStatus"), "Iniciando sesión…", "info");
   try {
-    const result = await signInWithMfa(auth);
+    const result = await signIn(auth);
     const idToken = await result.user.getIdToken();
     const refreshToken = result.user.refreshToken;
     const res = await fetch("/auth", {
@@ -164,10 +169,7 @@ $("signin").addEventListener("click", async () => {
     });
     const body = await res.json();
     if (body.ok) {
-      status($("authStatus"), "Sesión iniciada.", "ok");
-      $("screenLogin").style.display = "none";
-      $("screenFirma").style.display = "block";
-      showRelink();
+      await refreshList();
     } else {
       status($("authStatus"), "No se pudo iniciar sesión: " + (body.error || "error"), "err");
     }
@@ -176,19 +178,11 @@ $("signin").addEventListener("click", async () => {
   }
 });
 
-async function signInWithMfa(a) {
-  try {
-    return await a.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-  } catch (err) {
-    if (err.code !== "auth/multi-factor-auth-required") throw err;
-    const resolver = firebase.auth.getMultiFactorResolver(err);
-    const hint = resolver.hints[0];
-    const code = prompt("Ingresá tu código TOTP (MFA):");
-    if (!code) throw new Error("MFA cancelado");
-    const assertion = firebase.auth.TotpMultiFactorGenerator
-      .assertionForSignIn(hint.uid, code);
-    return resolver.resolveSignIn(assertion);
-  }
+// No MFA (TOTP) in the MCP: it's an acquisition channel and read-only, so
+// sign-in is a plain Google popup. The user's own Google 2FA (if any) is
+// handled by Google, not Fintecia (S3: "Sin MFA en el MCP").
+function signIn(a) {
+  return a.signInWithPopup(new firebase.auth.GoogleAuthProvider());
 }
 
 const read = (file) => new Promise((res, rej) => {
@@ -211,15 +205,11 @@ $("f").addEventListener("submit", async (e) => {
     });
     const body = await res.json();
     if (body.ok) {
-      const okMsg = "E-firma válida · RFC " + body.rfc + ". ¡Listo! Ya podés cerrar esta ventana y volver al agente para pedir tus facturas.";
       if (body.passwordPersisted === false) {
-        status($("out"), "E-firma válida · RFC " + body.rfc + ". PERO no pude guardar la contraseña en el keyring (" + (body.keychainError || "keyring no disponible") + "). Re-ingresala abajo antes de firmar.", "err");
-        $("f").style.display = "none";
-        showRelink();
-      } else {
-        status($("out"), okMsg, "ok");
-        $("f").style.display = "none";
+        status($("listOut"), "E-firma válida · RFC " + body.rfc + ". PERO no pude guardar la contraseña en el keyring (" + (body.keychainError || "keyring no disponible") + "). Re-ingresala en la lista.", "err");
       }
+      $("f").reset();
+      await refreshList();
     } else {
       status($("out"), "No se pudo validar: " + (body.error || "error"), "err");
     }
@@ -228,39 +218,66 @@ $("f").addEventListener("submit", async (e) => {
   }
 });
 
-async function showRelink() {
-  try {
-    const res = await fetch("/rfcs");
-    const body = await res.json();
-    const rfcs = body.rfcs || [];
-    if (!rfcs.length) return;
-    $("relinkRfc").innerHTML = rfcs.map((r) => '<option value="' + r + '">' + r + '</option>').join("");
-    $("relinkSection").style.display = "block";
-  } catch {}
+const screens = ["screenLogin", "screenList", "screenAdd"];
+function showScreen(id) {
+  for (const s of screens) $(s).style.display = s === id ? "block" : "none";
 }
 
-$("relinkBtn").addEventListener("click", async () => {
-  status($("relinkOut"), "Guardando contraseña…", "info");
-  try {
-    const rfc = $("relinkRfc").value;
-    const res = await fetch("/refiel", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ rfc, password: $("relinkPass").value }),
-    });
-    const body = await res.json();
-    if (body.ok && body.passwordPersisted !== false) {
-      status($("relinkOut"), "Contraseña guardada. ¡Listo! Ya podés cerrar esta ventana.", "ok");
-      $("relinkPass").value = "";
-    } else if (body.ok) {
-      status($("relinkOut"), "Contraseña válida pero NO pude guardarla en el keyring: " + (body.keychainError || "keyring no disponible"), "err");
-    } else {
-      status($("relinkOut"), "No se pudo: " + (body.error || "error"), "err");
+async function refreshList() {
+  const res = await fetch("/efirmas");
+  const body = await res.json();
+  const efirmas = body.efirmas || [];
+  if (efirmas.length === 0) { showScreen("screenAdd"); return; }
+  renderList(efirmas);
+  showScreen("screenList");
+}
+
+function renderList(efirmas) {
+  const el = $("efirmaList");
+  el.innerHTML = "";
+  for (const e of efirmas) {
+    const item = document.createElement("div");
+    item.className = "efirma-item";
+    const rfc = document.createElement("div");
+    rfc.className = "efirma-rfc";
+    rfc.textContent = e.rfc;
+    const st = document.createElement("div");
+    st.className = "efirma-status " + (e.hasPassword ? "ok" : "warn");
+    st.textContent = e.hasPassword ? "✓ lista para usar" : "⚠ falta la contraseña";
+    item.appendChild(rfc);
+    item.appendChild(st);
+    if (!e.hasPassword) {
+      const btn = document.createElement("button");
+      btn.className = "btn";
+      btn.textContent = "Re-ingresar contraseña";
+      btn.addEventListener("click", () => relink(e.rfc));
+      item.appendChild(btn);
     }
-  } catch (err) {
-    status($("relinkOut"), "No se pudo: " + String(err), "err");
+    el.appendChild(item);
   }
-});
+}
+
+$("addFirma").addEventListener("click", () => showScreen("screenAdd"));
+$("backToList").addEventListener("click", () => refreshList());
+
+async function relink(rfc) {
+  const password = prompt("Contraseña de la llave para " + rfc + ":");
+  if (!password) return;
+  const res = await fetch("/refiel", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ rfc, password }),
+  });
+  const body = await res.json();
+  if (body.ok && body.passwordPersisted !== false) {
+    status($("listOut"), "Contraseña guardada para " + rfc + ".", "ok");
+    await refreshList();
+  } else if (body.ok) {
+    status($("listOut"), "Contraseña válida pero NO pude guardarla en el keyring: " + (body.keychainError || "keyring no disponible"), "err");
+  } else {
+    status($("listOut"), "No se pudo: " + (body.error || "error"), "err");
+  }
+}
 </script></body></html>`;
 }
 
@@ -348,12 +365,19 @@ export function startOnboardServer(
           return;
         }
 
-        if (req.method === "GET" && req.url === "/rfcs") {
+        if (req.method === "GET" && req.url === "/efirmas") {
           if (!session.idToken) {
             send(401, { ok: false, error: "iniciá sesión primero (Google)" });
             return;
           }
-          send(200, { rfcs: await store.list() });
+          const rfcs = await store.list();
+          const efirmas = await Promise.all(
+            rfcs.map(async (rfc) => ({
+              rfc,
+              hasPassword: (await keychain.get(fielKeychainKey(rfc))) !== null,
+            })),
+          );
+          send(200, { efirmas });
           return;
         }
 

@@ -20,9 +20,10 @@ export const AUTH_EMULATOR_URL =
  * The MCP talks to the backend over plain `fetch` (NOT the Firebase Functions
  * SDK), so it must know the full base URL. `FINTECIA_API_URL` wins when set;
  * otherwise the URL is derived from `FINTECIA_ENV`:
- *   - local      → Functions emulator (project `demo-fintecia-dev`, from
- *                  `.firebaserc`; the emulator only serves callables under its
- *                  own project id — see `firebase_options.dart`)
+ *   - local      → Hosting emulator (http://127.0.0.1:5000). The client calls
+ *                  `/api/v1/*` paths, which are Hosting rewrites (firebase.json);
+ *                  the Functions emulator (5001) serves functions BY NAME, so it
+ *                  does NOT serve the `/api/v1/*` rewrite paths.
  *   - staging    → fintecia-staging.web.app
  *   - production → app.fintecia.com.mx
  *
@@ -40,7 +41,7 @@ export function resolveApiBaseUrl(
     case 'local':
       return (
         localOverride?.trim() ||
-        'http://127.0.0.1:5001/demo-fintecia-dev/us-central1'
+        'http://127.0.0.1:5000'
       );
     case 'staging':
       return 'https://fintecia-staging.web.app';

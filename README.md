@@ -20,7 +20,7 @@ que **nunca sale de tu máquina**.
 ## Requisitos
 
 - **Node.js 20 o superior.**
-- **Cuenta de Fintecia** para las herramientas `fintecia_*` (login con Google + MFA).
+- **Cuenta de Fintecia** para las herramientas `fintecia_*` (login con Google).
 - **e-firma** (`.cer` + `.key` + contraseña) solo si querés descargar CFDIs del SAT.
   Sin e-firma, las consultas públicas y las de tu cuenta siguen funcionando.
 
@@ -59,7 +59,7 @@ cliente para la sintaxis exacta.
 
 1. Pedile a tu agente que ejecute la herramienta **`fintecia_login`**.
 2. Abrí en tu navegador la URL local que devuelve.
-3. Iniciá sesión con Google (+ MFA) y cargá tu e-firma (`.cer` + `.key` + contraseña).
+3. Iniciá sesión con Google y cargá tu e-firma (`.cer` + `.key` + contraseña).
 4. Listo: tu agente queda autenticado y vinculado a tu RFC.
 
 ## Herramientas
@@ -76,6 +76,7 @@ cliente para la sintaxis exacta.
 
 | Herramienta | Qué hace |
 |---|---|
+| `fintecia_efirmas` | Lista las e-firmas registradas en esta máquina. |
 | `cfdi_download` | Descarga CFDIs del SAT por periodo (async → devuelve un `jobId`). |
 | `cfdi_download_status` | Consulta el estado de una descarga en curso. |
 | `cfdi_sync_status` | Qué tan al día está tu información local. |

@@ -68,15 +68,23 @@ export const TOOLS: ToolDef[] = [
 
   // ── Descarga (e-firma local) ────────────────────────────────────────────
   {
+    name: "fintecia_efirmas",
+    description:
+      "List the e-firmas registered locally on this machine (RFC + whether its " +
+      "password is in the OS keyring). Call before cfdi_download to learn which " +
+      "RFC to use: if exactly one is returned, use it directly; if several, ask " +
+      "the user. Local read — no Fintecia account needed.",
+    inputSchema: z.object({}),
+    annotations: { readOnlyHint: true },
+  },
+  {
     name: "cfdi_download",
     description:
-      "Trigger SAT DescargaMasiva for a period using the LOCAL e-firma (never " +
-      "uploaded to Fintecia). Async: returns a job id; poll with " +
-      "cfdi_download_status. Emitidos = invoices you issued; recibidos = invoices " +
-      "you received. This has side effects (download + upload to Fintecia). " +
-      "The e-firma material (.cer/.key/password) is resolved locally by RFC via " +
-      "the FielProvider — it never leaves the machine; only the resulting CFDIs " +
-      "are uploaded.",
+      "Download CFDIs from the SAT for a period using the LOCAL e-firma (never " +
+      "uploaded to Fintecia). Use the rfc from fintecia_efirmas. Emitidos = " +
+      "invoices you issued; recibidos = invoices you received. Async: returns a " +
+      "jobId; poll cfdi_download_status until it completes. Only the resulting " +
+      "CFDIs are uploaded to Fintecia (the .cer/.key/password never leave the machine).",
     inputSchema: z.object({
       tipo: z.enum(["emitidos", "recibidos", "ambos"]).describe("Qué descargar."),
       desde: z.string().describe("Fecha de inicio (YYYY-MM-DD)."),
@@ -89,7 +97,10 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: "cfdi_download_status",
-    description: "Poll the status of a DescargaMasiva job (Autentica → Solicitud → Verificación → Descarga).",
+    description:
+      "Poll a DescargaMasiva job (autentica → verificacion → descarga → upload). " +
+      "When status is 'completed', the CFDIs are in Fintecia — read them with the " +
+      "fintecia_* tools. If 'failed', surface the error to the user.",
     inputSchema: z.object({
       jobId: z.string().describe("ID del job devuelto por cfdi_download."),
     }),
@@ -105,7 +116,10 @@ export const TOOLS: ToolDef[] = [
   // ── Fintecia (auth, materializado) ──────────────────────────────────────
   {
     name: "fintecia_profile",
-    description: "Who the authenticated user is and which taxpayer(s) they are linked to (multi-taxpayer).",
+    description:
+      "Who the authenticated user is and which taxpayer(s) they are linked to " +
+      "(multi-taxpayer). Call this first among the fintecia_* reads to learn the " +
+      "available taxpayer RFCs.",
     inputSchema: z.object({}),
     annotations: { readOnlyHint: true },
   },
