@@ -113,12 +113,11 @@ cliente para la sintaxis exacta.
 
 | Variable | Default | Descripción |
 |---|---|---|
-| `FINTECIA_ENV` | `local` | Entorno del backend: `production`, `staging` o `local` (emulador de desarrollo). |
+| `FINTECIA_ENV` | `production` | Entorno del backend: `production`, `staging` o `local` (emulador de desarrollo). |
 | `FINTECIA_API_URL` | *(derivada de `FINTECIA_ENV`)* | URL base del backend (override manual, sin `/` final). |
 
-> **Para usar contra producción**, configurá `FINTECIA_ENV=production`. El default
-> `local` apunta al emulador de desarrollo y solo sirve si corrés el backend de
-> Fintecia localmente.
+> El default es **`production`**: no hace falta configurar nada para el uso normal.
+> Para desarrollo local contra el emulador, seteá `FINTECIA_ENV=local`.
 
 ## Desarrollo
 

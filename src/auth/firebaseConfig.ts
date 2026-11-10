@@ -3,11 +3,13 @@
  * meant to be embedded (the Web API key is not a secret). Overridable via env
  * for staging/local emulator.
  *
- * `FINTECIA_ENV` mirrors the Flutter app's `Env` (default "local"): when
- * local, the onboarding page connects the Auth SDK to the Auth emulator at
- * 127.0.0.1:9099 (same as `lib/main.dart` `useAuthEmulator`).
+ * `FINTECIA_ENV` selects the backend environment. Unlike the Flutter app's
+ * `Env` (which defaults to "local" for dev), the MCP is distributed to end
+ * users, so it defaults to "production": when local, the onboarding page
+ * connects the Auth SDK to the Auth emulator at 127.0.0.1:9099 (same as
+ * `lib/main.dart` `useAuthEmulator`).
  */
-export const FIREBASE_ENV = process.env.FINTECIA_ENV ?? 'local';
+export const FIREBASE_ENV = process.env.FINTECIA_ENV ?? 'production';
 export const isLocal = FIREBASE_ENV === 'local';
 export const AUTH_EMULATOR_URL =
   process.env.FIREBASE_AUTH_EMULATOR ?? 'http://127.0.0.1:9099';
@@ -17,8 +19,7 @@ export const AUTH_EMULATOR_URL =
  *
  * The MCP talks to the backend over plain `fetch` (NOT the Firebase Functions
  * SDK), so it must know the full base URL. `FINTECIA_API_URL` wins when set;
- * otherwise the URL is derived from `FINTECIA_ENV` (mirrors the Flutter app's
- * `Env`):
+ * otherwise the URL is derived from `FINTECIA_ENV`:
  *   - local      → Functions emulator (project `demo-fintecia-dev`, from
  *                  `.firebaserc`; the emulator only serves callables under its
  *                  own project id — see `firebase_options.dart`)
