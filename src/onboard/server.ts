@@ -6,7 +6,7 @@ import {
 } from "node:http";
 import { inspectFiel } from "../fiel/fiel.js";
 import type { FielStore } from "../fiel/store.js";
-import { FIREBASE_WEB_CONFIG } from "../auth/firebaseConfig.js";
+import { FIREBASE_WEB_CONFIG, isLocal, AUTH_EMULATOR_URL } from "../auth/firebaseConfig.js";
 import { SessionStore, type AuthSession } from "../auth/session.js";
 import { type Keychain, detectKeychain } from "../keychain/keychain.js";
 import { saveFielPassword } from "../sat/keychainFielProvider.js";
@@ -19,7 +19,7 @@ import { saveFielPassword } from "../sat/keychainFielProvider.js";
  *      the SessionStore. The password / tokens never leave the process.
  */
 
-function html(config: Record<string, string>): string {
+function html(config: Record<string, string>, localAuthUrl: string | null): string {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <title>Fintecia — conectar</title></head><body>
 <h1>Conectar con Fintecia</h1>
@@ -41,6 +41,7 @@ function html(config: Record<string, string>): string {
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
 <script>
 firebase.initializeApp(${JSON.stringify(config)});
+${localAuthUrl ? `firebase.auth().useEmulator(${JSON.stringify(localAuthUrl)});` : ''}
 const auth = firebase.auth();
 
 const $ = (id) => document.getElementById(id);
@@ -131,7 +132,12 @@ export function startOnboardServer(
 
         if (req.method === "GET" && req.url === "/") {
           res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-          res.end(html(FIREBASE_WEB_CONFIG as Record<string, string>));
+          res.end(
+            html(
+              FIREBASE_WEB_CONFIG as Record<string, string>,
+              isLocal ? AUTH_EMULATOR_URL : null,
+            ),
+          );
           return;
         }
 
