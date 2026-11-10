@@ -12,7 +12,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc && cp -r src/public/data dist/public/data",
+    "build": "tsc && mkdir -p dist/public/data && cp src/public/data/*.json dist/public/data/",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
