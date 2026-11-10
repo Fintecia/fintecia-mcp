@@ -197,7 +197,8 @@ $("f").addEventListener("submit", async (e) => {
     });
     const body = await res.json();
     if (body.ok) {
-      status($("out"), "E-firma válida. RFC: " + body.rfc, "ok");
+      status($("out"), "E-firma válida · RFC " + body.rfc + ". ¡Listo! Ya podés cerrar esta ventana y volver al agente para pedir tus facturas.", "ok");
+      $("f").style.display = "none";
     } else {
       status($("out"), "No se pudo validar: " + (body.error || "error"), "err");
     }
