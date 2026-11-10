@@ -3,7 +3,8 @@ import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { z } from "zod";
 import type { Server } from "node:http";
 import { TOOLS } from "./tools.js";
-import { createHandlers } from "./handlers.js";
+import { createHandlers, type ToolHandler } from "./handlers.js";
+import { TelemetryClient } from "./telemetry/client.js";
 import { SessionStore } from "./auth/session.js";
 import { FileFielStore } from "./fiel/store.js";
 import { startOnboardServer } from "./onboard/server.js";
@@ -28,6 +29,8 @@ function createServer(): McpServer {
     detectKeychain(process.platform),
   );
 
+  const telemetry = new TelemetryClient({ baseUrl: process.env.FINTECIA_API_URL });
+
   let onboard: { server: Server; url: string } | null = null;
 
   const handlers = createHandlers({
@@ -35,6 +38,28 @@ function createServer(): McpServer {
     uploadBaseUrl: process.env.FINTECIA_API_URL,
     getAuthToken: async () => session.idToken,
   });
+
+  const withTelemetry = (name: string, handler: ToolHandler): ToolHandler => {
+    return async (input) => {
+      const start = Date.now();
+      try {
+        const result = await handler(input);
+        telemetry.emit("tool_called", {
+          tool: name,
+          outcome: "success",
+          durationMs: Date.now() - start,
+        });
+        return result;
+      } catch (err) {
+        telemetry.emit("tool_called", {
+          tool: name,
+          outcome: "error",
+          durationMs: Date.now() - start,
+        });
+        throw err;
+      }
+    };
+  };
 
   for (const tool of TOOLS) {
     const handler = handlers.get(tool.name);
@@ -47,7 +72,7 @@ function createServer(): McpServer {
         inputSchema: tool.inputSchema,
         annotations: tool.annotations,
       },
-      async (input) => handler(input as Record<string, unknown>),
+      withTelemetry(tool.name, (input) => handler(input as Record<string, unknown>)),
     );
   }
 
@@ -64,6 +89,7 @@ function createServer(): McpServer {
       annotations: { readOnlyHint: true },
     },
     async () => {
+      telemetry.emit("login_started");
       if (!onboard) {
         onboard = await startOnboardServer(fielStore, session);
       }
