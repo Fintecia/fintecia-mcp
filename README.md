@@ -43,7 +43,7 @@ Esta es una **primera versión (0.1.0)**. Lo disponible hoy:
 ### 1. Instalar el servidor
 
 ```bash
-npm install -g fintecia-mcp
+npm install -g fintecia
 ```
 
 Esto deja el binario **`fintecia-mcp`** en tu `PATH` (apuntando a `dist/index.js`,
