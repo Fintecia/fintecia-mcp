@@ -37,14 +37,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Scan for secrets
-        uses: gitleaks/gitleaks-action@v3
-        with:
-          config: .gitleaks.toml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Optional.
-          GITLEAKS_ENABLE_COMMENTS: "false"
+      - name: Scan for secrets (free gitleaks binary — no license)
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/src" \
+            ghcr.io/gitleaks/gitleaks:latest \
+            detect --source=/src --config=/src/.gitleaks.toml --exit-code=1
 
   # Hard gate (like `npm audit`): any new advisory fails. Triaged findings live
   # in osv-scanner.toml (empty until a finding needs re-triaging). Uses the
