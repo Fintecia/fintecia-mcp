@@ -1,0 +1,27 @@
+# osv-scanner.toml — triaged dependency findings.
+#
+# Each entry ignores a SPECIFIC reviewed version that is either not exploitable
+# in this codebase or has no fix. Ignoring by exact name+version means a NEW
+# vulnerable version of the same package (or a new advisory) still fails the
+# scan — the gate stays proactive.
+#
+# Re-triage discipline: each entry carries an `effectiveUntil` date (quarterly
+# cadence). After that date the ignore stops applying and the scan fails again,
+# forcing a re-review. Revisit each `reason`, and drop the entry once the
+# upstream fix lands or a safe override exists.
+
+[[PackageOverrides]]
+name = "deepmerge"
+version = "4.3.1"
+ecosystem = "npm"
+vulnerability.ignore = true
+reason = "GHSA-gcqx-w48m-w2h4 (prototype poisoning). No fix available — deepmerge is unmaintained. Dev-only transitive of jest-config; it merges static Jest config, never untrusted input."
+effectiveUntil = 2027-05-11
+
+[[PackageOverrides]]
+name = "minimatch"
+version = "10.2.6"
+ecosystem = "npm"
+vulnerability.ignore = true
+reason = "GHSA-g3hv-75wg-m249 (DoS via globparts amplification). Fix is minimatch@11 (breaking major). Dev-only transitive of the jest/glob toolchain — no attacker-controlled glob patterns here."
+effectiveUntil = 2027-05-11

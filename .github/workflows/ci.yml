@@ -3,15 +3,108 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  ci:
+  # Parity gate: package.json `version` must be semver, and on a `v*` tag it
+  # must equal `v<version>`. Fails fast, never `allow_failure`.
+  version_check:
+    name: Version check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate package version (and tag parity on release tags)
+        run: node scripts/check-version.mjs
+        env:
+          GITHUB_REF: ${{ github.ref }}
+
+  # Secrets scanner — fails on real secrets, no false-positive config needed for
+  # a clean repo. GITLEAKS_LICENSE is optional (only required for org-owned repos).
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets (free gitleaks binary — no license)
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/src" \
+            ghcr.io/gitleaks/gitleaks:latest \
+            detect --source=/src --config=/src/.gitleaks.toml --exit-code=1
+
+  # Hard gate (like `npm audit`): any new advisory fails. Triaged findings live
+  # in osv-scanner.toml (empty until a finding needs re-triaging). Uses the
+  # official osv-scanner image; pin is bumpable (mvp pins v2.7.0).
+  dependency-scan:
+    name: Dependency scan (osv-scanner)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Scan package-lock.json for known vulnerabilities
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/src" \
+            ghcr.io/google/osv-scanner:v2.7.0 \
+            scan --format=vertical -L /src/package-lock.json --config=/src/osv-scanner.toml
+
+  lint:
+    name: Lint (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+  # A release tag MUST point to a commit already merged to main. Cheap local
+  # check (no API call): fail if the tag commit is not an ancestor of main.
+  verify-tag-on-main:
+    name: Verify tag is on main
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag commit is an ancestor of main
+        run: |
+          git fetch origin main
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "OK: tag commit $GITHUB_SHA is on main"
+          else
+            echo "FAIL: tag commit $GITHUB_SHA is NOT on main — release tags must be cut from main"
+            exit 1
+          fi
+
+  ci:
+    name: Build, test, audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
