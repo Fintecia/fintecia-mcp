@@ -176,7 +176,10 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: "fintecia_reconciliation",
-    description: "Bank↔CFDI reconciliation status: matched, suggested, pending approval, unmatched.",
+    description:
+      "Bank↔CFDI reconciliation status: matched, suggested, pending approval, " +
+      "unmatched. READ-ONLY — bank statement PDF upload is not yet available in " +
+      "this version (reconciliation only reports on data already imported).",
     inputSchema: z.object({
       taxpayerRfc: z.string().describe("RFC del contribuyente a consultar."),
     }),

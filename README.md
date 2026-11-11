@@ -17,6 +17,20 @@ que **nunca sale de tu máquina**.
 - **Verificar el riesgo fiscal** de cualquier RFC (listas 69-B y art. 69) y el estatus de una factura.
 - **Evaluar la deducibilidad** de tus gastos, con la evidencia de cada veredicto.
 
+## Estado del proyecto
+
+Esta es una **primera versión (0.1.0)**. Lo disponible hoy:
+
+- ✅ Descarga de CFDI del SAT con e-firma local + materialización en Fintecia.
+- ✅ Consultas materializadas: `fintecia_financials` (estados NIF B-3/B-6),
+  `fintecia_tax_summary`, `fintecia_risk_report`/`_check`, `fintecia_deductibility`.
+- ✅ `fintecia_reconciliation` (estado de conciliación banco↔CFDI, **solo lectura**).
+
+**Pendiente (próximas versiones):**
+
+- ⏳ **Carga del PDF de estado de cuenta bancario** para conciliar contra CFDI
+  (la reconciliación hoy solo reporta datos ya importados; no acepta el PDF todavía).
+
 ## Requisitos
 
 - **Node.js 20 o superior.**

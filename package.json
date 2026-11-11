@@ -4,6 +4,29 @@
   "type": "module",
   "description": "MCP local de Fintecia — descarga de CFDI con e-firma, conciliación banco-CFDI, riesgo 69-B/EFOS, deducibilidad fiscal. SAT · CFDI · Conciliación · Seguridad · México · agente AI",
   "license": "MIT",
+  "author": "Fintecia (https://fintecia.com.mx)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fintecia/fintecia-mcp.git"
+  },
+  "homepage": "https://fintecia.com.mx",
+  "bugs": {
+    "url": "https://github.com/Fintecia/fintecia-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "sat",
+    "cfdi",
+    "efirma",
+    "mexico",
+    "finanzas",
+    "contabilidad",
+    "impuestos",
+    "agente-ai"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "fintecia-mcp": "dist/index.js"
   },
