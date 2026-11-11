@@ -9,15 +9,19 @@
 # cadence). After that date the ignore stops applying and the scan fails again,
 # forcing a re-review. Revisit each `reason`, and drop the entry once the
 # upstream fix lands or a safe override exists.
-#
-# Currently empty: the dependency tree is clean. When a finding needs triage,
-# add a [[PackageOverrides]] block in the shape below (see
-# https://google.github.io/osv-scanner/configuration/ for the full schema):
-#
-# [[PackageOverrides]]
-# name = "example-package"
-# version = "1.2.3"
-# ecosystem = "npm"
-# vulnerability.ignore = true
-# reason = "GHSA-xxxx-xxxx-xxxx — why this exact version is not exploitable here / has no fix."
-# effectiveUntil = 2027-01-01
+
+[[PackageOverrides]]
+name = "deepmerge"
+version = "4.3.1"
+ecosystem = "npm"
+vulnerability.ignore = true
+reason = "GHSA-gcqx-w48m-w2h4 (prototype poisoning). No fix available — deepmerge is unmaintained. Dev-only transitive of jest-config; it merges static Jest config, never untrusted input."
+effectiveUntil = 2027-05-11
+
+[[PackageOverrides]]
+name = "minimatch"
+version = "10.2.6"
+ecosystem = "npm"
+vulnerability.ignore = true
+reason = "GHSA-g3hv-75wg-m249 (DoS via globparts amplification). Fix is minimatch@11 (breaking major). Dev-only transitive of the jest/glob toolchain — no attacker-controlled glob patterns here."
+effectiveUntil = 2027-05-11

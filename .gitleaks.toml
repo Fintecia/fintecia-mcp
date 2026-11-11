@@ -1,0 +1,10 @@
+# gitleaks config — allowlist de fixtures de test.
+# test/fixtures/fiel.key es una llave privada PEM GENERADA PARA TEST (self-signed,
+# sin valor real); los smoke tests la usan para firmar contra el seam de nodecfdi.
+# Nunca es una credencial real.
+
+[allowlist]
+description = "Test fixtures: fake FIEL private key/cert for smoke tests"
+paths = [
+  "test/fixtures/",
+]

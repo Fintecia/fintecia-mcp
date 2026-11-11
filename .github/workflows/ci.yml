@@ -39,6 +39,8 @@ jobs:
 
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@v3
+        with:
+          config: .gitleaks.toml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Optional.
