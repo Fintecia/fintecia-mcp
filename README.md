@@ -1,4 +1,4 @@
-# fintecia-mcp
+# fintecia
 
 [![CI](https://github.com/Fintecia/fintecia-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Fintecia/fintecia-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -48,9 +48,6 @@ npm install -g fintecia
 
 Esto deja el binario **`fintecia-mcp`** en tu `PATH` (apuntando a `dist/index.js`,
 definido en `package.json` `bin`). No hace falta clonar el repo ni compilar.
-
-> **Desarrollo / instalación desde fuente:** si querés correr la rama en curso,
-> cloná y compilá a mano — ver [Desarrollo](#desarrollo).
 
 ### 2. Registrar el servidor en tu cliente MCP
 
@@ -117,6 +114,12 @@ cliente para la sintaxis exacta.
 > herramientas `_transactions` / `_cfdi` son solo para inspeccionar qué hay detrás de
 > un número, nunca para re-sumarlo.
 
+### Glosario de campos (estática, sin login)
+
+| Herramienta | Qué hace |
+|---|---|
+| `fintecia_glosario` | Diccionario de campos de las tools `fintecia_*` (money objects, NIF B-3/B-6, impuestos vs ISR prepagado, IVA en el balance). Estática y sin auth — devuelve el glosario para interpretar `fintecia_financials`. |
+
 ## Seguridad y privacidad
 
 - Tu **e-firma nunca sale de tu máquina**: se guarda en el keychain del sistema
@@ -126,40 +129,6 @@ cliente para la sintaxis exacta.
   la autenticación es OAuth de *loopback* — tu navegador hace el login y el token
   queda en memoria, no en disco.
 - Todo acceso a tus datos pasa por tu sesión autenticada.
-
-## Configuración (opcional)
-
-| Variable | Default | Descripción |
-|---|---|---|
-| `FINTECIA_ENV` | `production` | Entorno del backend: `production`, `staging` o `local` (emulador de desarrollo). |
-| `FINTECIA_API_URL` | *(derivada de `FINTECIA_ENV`)* | URL base del backend (override manual, sin `/` final). |
-
-> El default es **`production`**: no hace falta configurar nada para el uso normal.
-> Para desarrollo local contra el emulador, seteá `FINTECIA_ENV=local`.
-
-## Desarrollo
-
-Instalación desde fuente (solo si vas a contribuir o probar la rama en curso):
-
-```bash
-git clone https://github.com/Fintecia/fintecia-mcp.git
-cd fintecia-mcp
-npm install        # instala deps y compila a dist/ (script prepare)
-npm run build      # o compilá manualmente
-node dist/index.js # corre el servidor por stdio
-```
-
-Para desarrollo iterativo:
-
-```bash
-npm run dev        # tsx watch
-npm run typecheck  # tsc --noEmit
-npm test           # jest
-```
-
-> Publicación: el paquete se empaqueta con `files: ["dist"]` y `prepare` compila
-> `dist/` antes de publicar (`npm publish`), así que el tarball de npm lleva el
-> binario listo sin el código fuente.
 
 ## Licencia
 
