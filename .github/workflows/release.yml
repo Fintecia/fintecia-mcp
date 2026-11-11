@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # softprops/action-gh-release creates the GitHub Release.
+  id-token: write # npm Trusted Publishing (OIDC) — no NPM_TOKEN needed.
+
+jobs:
+  publish:
+    name: Publish to npm + GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Version-parity gate: the tag must equal v<package.json version>. Fails
+      # the release before any publish if the tag drifts from the declared version.
+      - name: Validate version parity
+        run: node scripts/check-version.mjs
+        env:
+          GITHUB_REF: ${{ github.ref }}
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      # Trusted Publishing (OIDC): npm exchanges the GitHub OIDC token for a
+      # short-lived publish token. Token-free — no NPM_TOKEN, no .npmrc, no
+      # NODE_AUTH_TOKEN. Manual one-time setup in npm: package `fintecia` →
+      # Settings → Trusted publishers → Add trusted publisher → GitHub Actions,
+      # Owner `Fintecia`, Repository `fintecia-mcp`,
+      # Workflow `.github/workflows/release.yml`.
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

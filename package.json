@@ -43,6 +43,7 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
     "test": "jest",
     "test:smoke": "tsx test/smoke/fiel.smoke.ts && tsx test/smoke/onboard.smoke.ts && tsx test/smoke/descarga.smoke.ts && tsx test/smoke/handlers.smoke.ts",
     "onboard": "tsx src/onboard/cli.ts"
@@ -55,9 +56,11 @@
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0"
   }
 }

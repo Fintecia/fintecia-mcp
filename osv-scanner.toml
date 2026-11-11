@@ -1,0 +1,23 @@
+# osv-scanner.toml — triaged dependency findings.
+#
+# Each entry ignores a SPECIFIC reviewed version that is either not exploitable
+# in this codebase or has no fix. Ignoring by exact name+version means a NEW
+# vulnerable version of the same package (or a new advisory) still fails the
+# scan — the gate stays proactive.
+#
+# Re-triage discipline: each entry carries an `effectiveUntil` date (quarterly
+# cadence). After that date the ignore stops applying and the scan fails again,
+# forcing a re-review. Revisit each `reason`, and drop the entry once the
+# upstream fix lands or a safe override exists.
+#
+# Currently empty: the dependency tree is clean. When a finding needs triage,
+# add a [[PackageOverrides]] block in the shape below (see
+# https://google.github.io/osv-scanner/configuration/ for the full schema):
+#
+# [[PackageOverrides]]
+# name = "example-package"
+# version = "1.2.3"
+# ecosystem = "npm"
+# vulnerability.ignore = true
+# reason = "GHSA-xxxx-xxxx-xxxx — why this exact version is not exploitable here / has no fix."
+# effectiveUntil = 2027-01-01
