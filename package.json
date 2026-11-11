@@ -1,6 +1,6 @@
 {
   "name": "fintecia",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "MCP local de Fintecia — descarga de CFDI con e-firma, conciliación banco-CFDI, riesgo 69-B/EFOS, deducibilidad fiscal. SAT · CFDI · Conciliación · Seguridad · México · agente AI",
   "license": "MIT",
