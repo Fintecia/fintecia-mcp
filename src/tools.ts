@@ -166,8 +166,8 @@ export const TOOLS: ToolDef[] = [
       "is an anticipo, they owe you). Returns: balances (assets/liabilities), periodNet " +
       "(income, expenses, taxes = ISR causado + PTU, isrRetenido = prepaid ISR a favor [PF only], " +
       "result = income − expenses − taxes), receivablesPayables, cash, iva (balance-sheet IVA), " +
-      "ratios, health, and the full NIF B-3 incomeStatement and NIF B-6 balanceSheet. A " +
-      "'glosario' field maps every key to its meaning — consult it before interpreting fields.",
+      "ratios, health, and the full NIF B-3 incomeStatement and NIF B-6 balanceSheet. " +
+      "For the meaning of each field, call fintecia_glosario first.",
     inputSchema: z.object({
       taxpayerRfc: z.string().describe("RFC del contribuyente a consultar."),
       hasta: z.string().optional().describe("Corte (YYYY-MM-DD), default hoy."),

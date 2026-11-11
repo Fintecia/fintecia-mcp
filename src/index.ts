@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { Server } from "node:http";
 import { TOOLS } from "./tools.js";
 import { createHandlers, type ToolHandler } from "./handlers.js";
+import { FINANCIALS_GLOSSARY } from "./glossary.js";
 import { TelemetryClient } from "./telemetry/client.js";
 import { SessionStore } from "./auth/session.js";
 import { FileFielStore } from "./fiel/store.js";
@@ -113,6 +114,29 @@ function createServer(): McpServer {
         ],
       };
     },
+  );
+
+  // Static field glossary — no auth, no backend round-trip. The agent can
+  // load it during onboarding (in parallel with login + e-firma) to learn
+  // the field semantics of fintecia_financials before it queries data.
+  server.registerTool(
+    "fintecia_glosario",
+    {
+      description:
+        "Field dictionary for the fintecia_* tools: what every field means " +
+        "(money objects, NIF B-3/B-6, taxes vs prepaid ISR, IVA in the balance). " +
+        "Static and auth-free — call it once to interpret fintecia_financials.",
+      inputSchema: z.object({}),
+      annotations: { readOnlyHint: true },
+    },
+    async () => ({
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({ glosario: FINANCIALS_GLOSSARY }, null, 2),
+        },
+      ],
+    }),
   );
 
   return server;
