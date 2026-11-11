@@ -160,8 +160,14 @@ export const TOOLS: ToolDef[] = [
   {
     name: "fintecia_financials",
     description:
-      "Materialized balances + ratios, computed by Fintecia. Use ALWAYS to answer " +
-      "'how much' — never recompute from raw transactions.",
+      "Materialized financial statements computed by Fintecia — use ALWAYS to answer " +
+      "'how much', never recompute from raw transactions. Every money field is an object " +
+      "{ currency: 'MXN', amount: number } (sign is meaningful: a negative liability/supplier " +
+      "is an anticipo, they owe you). Returns: balances (assets/liabilities), periodNet " +
+      "(income, expenses, taxes = ISR causado + PTU, isrRetenido = prepaid ISR a favor [PF only], " +
+      "result = income − expenses − taxes), receivablesPayables, cash, iva (balance-sheet IVA), " +
+      "ratios, health, and the full NIF B-3 incomeStatement and NIF B-6 balanceSheet. A " +
+      "'glosario' field maps every key to its meaning — consult it before interpreting fields.",
     inputSchema: z.object({
       taxpayerRfc: z.string().describe("RFC del contribuyente a consultar."),
       hasta: z.string().optional().describe("Corte (YYYY-MM-DD), default hoy."),
