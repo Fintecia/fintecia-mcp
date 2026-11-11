@@ -1,10 +1,8 @@
-// Smoke test for the cfdi_* handler wiring (runs via tsx / ESM).
+// Smoke test for the cfdi_* + public-lookup handler wiring (runs via tsx / ESM).
 //
-// handlers.ts keeps a pre-existing `import.meta.url` in `loadEfos`, which is
-// correct in ESM but a syntax error under ts-jest's CJS transform — so the
-// handler wiring is exercised here (tsx) rather than in jest. Only the
-// non-network paths are covered; the SAT flow itself is the descarga.smoke.ts
-// seam + a manual run.
+// Only the non-network paths are covered: the SAT public-list lookups use an
+// injected fetchFn (no live backend), and the SAT flow itself is the
+// descarga.smoke.ts seam + a manual run.
 import { createHandlers } from "../../src/handlers.js";
 import { InMemoryJobStore } from "../../src/sat/jobs.js";
 import { InMemoryFielProvider } from "../../src/sat/fielProvider.js";
@@ -98,13 +96,27 @@ if (!/Sin descargas/.test(empty)) {
   throw new Error(`unexpected empty cfdi_sync_status: ${empty}`);
 }
 
-// PRESERVE: sat_efos_check (the pre-existing handler) still resolves, not a stub.
-const efosResult = await handlers.get("sat_efos_check")!({ rfc: "AAA120730823" });
-if (/not yet implemented/.test(text(efosResult))) {
-  throw new Error("sat_efos_check regressed to a stub");
-}
-if (!/DEFINITIVO/.test(text(efosResult))) {
-  throw new Error(`unexpected sat_efos_check output: ${text(efosResult)}`);
+// sat_efos_check now hits the backend (auth, not e-firma) — no local fixture.
+// Without a session it must reject (never return stale fixture data).
+await rejects(
+  handlers.get("sat_efos_check")!({ rfc: "AAA120730823" }),
+  /Iniciá sesión/,
+);
+
+// With a session + backend, sat_efos_check returns the backend entry.
+const efosBackend = createHandlers({
+  getAuthToken: async () => "id-token",
+  fetchFn: (async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      found: true,
+      entry: { rfc: "AAA120730823", nombre: "A SA", situacion: "definitivo" },
+    }),
+  })) as unknown as typeof fetch,
+}).get("sat_efos_check")!({ rfc: "aaa120730823" });
+if (!/DEFINITIVO/.test(text(await efosBackend))) {
+  throw new Error(`unexpected sat_efos_check backend output: ${text(await efosBackend)}`);
 }
 
 // fintecia_efirmas returns the list from the listEfirmas dep (empty by default).

@@ -1,7 +1,4 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import { EfosLookup, normalizeRfc } from "./public/efos.js";
+import { PublicLookupClient, normalizeRfc } from "./public/lookup.js";
 import { buildExpresionImpresa, VerificationClient } from "./public/verify.js";
 import {
   validateDownloadArgs,
@@ -53,24 +50,6 @@ export interface HandlerDeps {
   fetchFn?: typeof fetch;
 }
 
-function loadEfos(): EfosLookup {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  const json = readFileSync(
-    path.join(here, "public", "data", "efos.fixture.json"),
-    "utf8",
-  );
-  return EfosLookup.fromJson(JSON.parse(json));
-}
-
-function loadDebts(): EfosLookup {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  const json = readFileSync(
-    path.join(here, "public", "data", "debts.fixture.json"),
-    "utf8",
-  );
-  return EfosLookup.fromJson(JSON.parse(json));
-}
-
 function stub(name: string): ToolHandler {
   return async () => ({
     content: [
@@ -91,10 +70,14 @@ function json(value: unknown): ToolResult {
 }
 
 export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler> {
-  const efos = loadEfos();
-  const debts = loadDebts();
   const fielProvider = deps.fielProvider ?? new InMemoryFielProvider();
   const jobStore = deps.jobStore ?? new InMemoryJobStore();
+
+  const publicClient = new PublicLookupClient({
+    baseUrl: deps.uploadBaseUrl ?? "",
+    getAuthToken: deps.getAuthToken ?? (async () => null),
+    fetchFn: deps.fetchFn,
+  });
 
   const readClient = new ReadClient({
     baseUrl: deps.uploadBaseUrl ?? "",
@@ -106,8 +89,8 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
 
   handlers.set("sat_efos_check", async (input) => {
     const rfc = normalizeRfc(String(input.rfc ?? ""));
-    const entry = efos.check(rfc);
-    if (!entry) {
+    const { found, entry } = await publicClient.checkEfos(rfc);
+    if (!found || !entry) {
       return text(
         `RFC ${rfc}: no aparece en el listado 69-B (operaciones presuntamente inexistentes).`,
       );
@@ -120,8 +103,8 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
 
   handlers.set("sat_debts_check", async (input) => {
     const rfc = normalizeRfc(String(input.rfc ?? ""));
-    const entry = debts.check(rfc);
-    if (!entry) {
+    const { found, entry } = await publicClient.checkDebts(rfc);
+    if (!found || !entry) {
       return text(
         `RFC ${rfc}: no aparece en el listado art. 69 (créditos fiscales firmes).`,
       );
