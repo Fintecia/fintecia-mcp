@@ -26,26 +26,29 @@ que **nunca sale de tu máquina**.
 
 ## Instalación
 
-### 1. Obtener el servidor
+### 1. Instalar el servidor
 
 ```bash
-git clone https://github.com/Fintecia/fintecia-mcp.git
-cd fintecia-mcp
-npm install
-npm run build      # compila a dist/
+npm install -g fintecia-mcp
 ```
+
+Esto deja el binario **`fintecia-mcp`** en tu `PATH` (apuntando a `dist/index.js`,
+definido en `package.json` `bin`). No hace falta clonar el repo ni compilar.
+
+> **Desarrollo / instalación desde fuente:** si querés correr la rama en curso,
+> cloná y compilá a mano — ver [Desarrollo](#desarrollo).
 
 ### 2. Registrar el servidor en tu cliente MCP
 
-Agregá una entrada `fintecia` apuntando a `dist/index.js`. En **Claude Desktop**
-(`claude_desktop_config.json`):
+Agregá una entrada `fintecia` apuntando al binario `fintecia-mcp`. En **Claude
+Desktop** (`claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "fintecia": {
-      "command": "node",
-      "args": ["/ruta/absoluta/a/fintecia-mcp/dist/index.js"]
+      "command": "fintecia-mcp",
+      "args": []
     }
   }
 }
@@ -122,11 +125,27 @@ cliente para la sintaxis exacta.
 
 ## Desarrollo
 
+Instalación desde fuente (solo si vas a contribuir o probar la rama en curso):
+
+```bash
+git clone https://github.com/Fintecia/fintecia-mcp.git
+cd fintecia-mcp
+npm install        # instala deps y compila a dist/ (script prepare)
+npm run build      # o compilá manualmente
+node dist/index.js # corre el servidor por stdio
+```
+
+Para desarrollo iterativo:
+
 ```bash
 npm run dev        # tsx watch
 npm run typecheck  # tsc --noEmit
 npm test           # jest
 ```
+
+> Publicación: el paquete se empaqueta con `files: ["dist"]` y `prepare` compila
+> `dist/` antes de publicar (`npm publish`), así que el tarball de npm lleva el
+> binario listo sin el código fuente.
 
 ## Licencia
 
