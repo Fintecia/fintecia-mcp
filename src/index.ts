@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { z } from "zod";
@@ -14,6 +17,15 @@ import { detectKeychain, fielKeychainKey } from "./keychain/keychain.js";
 import { KeychainFielProvider } from "./sat/keychainFielProvider.js";
 import { API_BASE_URL } from "./auth/firebaseConfig.js";
 
+// Versión del servidor: leída de package.json (fuente única), no hardcodeada.
+// `dist/index.js` resuelve `../package.json` a la raíz del paquete publicado.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PKG_VERSION = (
+  JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf8")) as {
+    version: string;
+  }
+).version;
+
 /**
  * Fintecia MCP server — local, read-only (+ local e-firma download).
  *
@@ -24,7 +36,7 @@ import { API_BASE_URL } from "./auth/firebaseConfig.js";
  */
 
 function createServer(): McpServer {
-  const server = new McpServer({ name: "fintecia-mcp", version: "0.1.0" });
+  const server = new McpServer({ name: "fintecia-mcp", version: PKG_VERSION });
   const session = new SessionStore();
   const fielStore = new FileFielStore();
   const keychain = detectKeychain(process.platform);

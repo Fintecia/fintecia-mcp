@@ -21,6 +21,18 @@ if (typeof version !== "string" || !SEMVER_RE.test(version)) {
   process.exit(1);
 }
 
+// package-lock.json must stay in sync with package.json (npm version bumps both).
+const lock = JSON.parse(
+  readFileSync(new URL("../package-lock.json", import.meta.url), "utf8"),
+);
+const lockVersion = lock.version ?? lock.packages?.[""]?.version;
+if (lockVersion !== version) {
+  console.error(
+    `FAIL: package-lock.json version "${lockVersion}" != package.json version "${version}". Run \`npm version ${version} --no-git-tag-version\`.`,
+  );
+  process.exit(1);
+}
+
 const ref = process.env.GITHUB_REF ?? "";
 if (ref.startsWith("refs/tags/v")) {
   const tag = ref.slice("refs/tags/".length);
