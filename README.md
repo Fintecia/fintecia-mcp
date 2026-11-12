@@ -19,7 +19,7 @@ que **nunca sale de tu máquina**.
 
 ## Estado del proyecto
 
-Esta es una **primera versión (0.1.0)**. Lo disponible hoy:
+Esta es una **primera versión (1.0.1)**. Lo disponible hoy:
 
 - ✅ Descarga de CFDI del SAT con e-firma local + materialización en Fintecia.
 - ✅ Consultas materializadas: `fintecia_financials` (estados NIF B-3/B-6),
@@ -122,9 +122,17 @@ cliente para la sintaxis exacta.
 
 ## Seguridad y privacidad
 
-- Tu **e-firma nunca sale de tu máquina**: se guarda en el keychain del sistema
-  (macOS Keychain / Windows Credential Manager / Linux libsecret). Fintecia solo
-  recibe los CFDI.
+Qué se queda local y qué se envía a Fintecia — transparente, sin letra chica:
+
+- **Tu e-firma nunca sale de tu máquina**: se guarda en el keychain del sistema
+  (macOS Keychain / Windows Credential Manager / Linux libsecret). Ni el `.key`
+  ni tu contraseña se transmiten a Fintecia ni al agente.
+- **Tus CFDI (facturas) sí se suben a los servidores de Fintecia** (Google Cloud)
+  para materializar tus estados financieros, impuestos y conciliación.
+  Es lo que permite que el agente responda "cuánto" con tus números reales.
+- **Telemetría anónima**: el MCP envía eventos de uso (id de instalación y de sesión
+  como UUID, qué agente usás, qué herramienta invocaste, resultado y duración).
+  **No** se envían tus prompts, conversaciones ni los argumentos de las herramientas.
 - El servidor es **local** (corre por stdio, en tu máquina) y **sin secretos**:
   la autenticación es OAuth de *loopback* — tu navegador hace el login y el token
   queda en memoria, no en disco.
