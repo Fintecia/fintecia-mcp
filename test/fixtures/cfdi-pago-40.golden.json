@@ -1,0 +1,74 @@
+{
+  "version": "4.0",
+  "serie": "P",
+  "folio": "1",
+  "fecha": "2024-01-15T10:30:00",
+  "formaPago": null,
+  "subtotal": 0,
+  "descuento": 0,
+  "moneda": "XXX",
+  "tipoCambio": null,
+  "total": 0,
+  "tipoDeComprobante": "P",
+  "metodoPago": null,
+  "lugarExpedicion": "06600",
+  "exportacion": "01",
+  "emisorRfc": "REC010101AAA",
+  "emisorNombre": "RECEPTOR TEST SA DE CV",
+  "emisorRegimenFiscal": "601",
+  "receptorRfc": "XAXX010101000",
+  "receptorNombre": "EMISOR TEST SA DE CV",
+  "receptorDomicilioFiscalReceptor": "06600",
+  "receptorRegimenFiscalReceptor": "601",
+  "receptorUsoCFDI": "CP01",
+  "conceptos": [
+    {
+      "claveProdServ": "84111506",
+      "cantidad": 1,
+      "claveUnidad": "ACT",
+      "descripcion": "Pago",
+      "valorUnitario": 0,
+      "importe": 0,
+      "objetoImp": "01"
+    }
+  ],
+  "totalImpuestosTrasladados": null,
+  "totalImpuestosRetenidos": null,
+  "trasladados": [],
+  "retenciones": [],
+  "nomina": null,
+  "uuid": "44444444-4444-4444-4444-444444444444",
+  "fechaTimbrado": "2024-01-15T10:30:01",
+  "rfcProvCertif": "CVD100101TFD",
+  "selloCFD": "c2VsbG8tY2Zk",
+  "noCertificadoSAT": "00001000000508664968",
+  "selloSAT": "c2VsbG8tc2F0",
+  "cfdiRelacionados": null,
+  "pagosComplemento": {
+    "version": "2.0",
+    "pagos": [
+      {
+        "fechaPago": "2024-01-10T12:00:00",
+        "formaDePagoP": "03",
+        "monedaP": "MXN",
+        "tipoCambioP": 1,
+        "monto": 5000,
+        "doctosRelacionados": [
+          {
+            "idDocumento": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
+            "monedaDR": "MXN",
+            "tipoCambioDR": null,
+            "metodoDePagoDR": "",
+            "numParcialidad": "1",
+            "impSaldoAnt": 10000,
+            "impPagado": 5000,
+            "impSaldoInsoluto": 5000
+          }
+        ]
+      }
+    ]
+  },
+  "motivoCancelacion": null,
+  "estatus": "vigente",
+  "fechaCancelacion": null
+}

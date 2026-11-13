@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Serie="A" Folio="12345" Fecha="2024-01-15T10:30:00" FormaPago="01" SubTotal="2000.00" Descuento="200.00" Moneda="MXN" TipoCambio="1.00" Total="2171.20" TipoDeComprobante="I" Exportacion="01" MetodoPago="PUE" LugarExpedicion="06600">
+  <cfdi:CfdiRelacionados TipoRelacion="04">
+    <cfdi:CfdiRelacionado UUID="11111111-1111-1111-1111-111111111111"/>
+    <cfdi:CfdiRelacionado UUID="22222222-2222-2222-2222-222222222222"/>
+  </cfdi:CfdiRelacionados>
+  <cfdi:Emisor Rfc="XAXX010101000" Nombre="EMISOR TEST SA DE CV" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="AAA010101AAA" Nombre="RECEPTOR TEST SA DE CV" DomicilioFiscalReceptor="06600" RegimenFiscalReceptor="601" UsoCFDI="G03"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="01010101" Cantidad="2" ClaveUnidad="H87" Descripcion="Servicio de consultoria" ValorUnitario="1000.00" Importe="2000.00" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="2000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="320.00"/>
+        </cfdi:Traslados>
+        <cfdi:Retenciones>
+          <cfdi:Retencion Base="2000.00" Impuesto="001" TipoFactor="Tasa" TasaOCuota="0.100000" Importe="200.00"/>
+        </cfdi:Retenciones>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="43211600" Cantidad="1" ClaveUnidad="H87" Descripcion="Equipo de computo" ValorUnitario="0.00" Importe="0.00" ObjetoImp="01"/>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="371.20" TotalImpuestosRetenidos="200.00">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base="2000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="320.00"/>
+      <cfdi:Traslado Base="320.00" Impuesto="003" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="51.20"/>
+    </cfdi:Traslados>
+    <cfdi:Retenciones>
+      <cfdi:Retencion Base="2000.00" Impuesto="001" TipoFactor="Tasa" TasaOCuota="0.100000" Importe="200.00"/>
+    </cfdi:Retenciones>
+  </cfdi:Impuestos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="6128396f-c09b-4ec6-8697-43d6e6ec1e51" FechaTimbrado="2024-01-15T10:30:01" RfcProvCertif="CVD100101TFD" NoCertificadoSAT="00001000000508664968" SelloCFD="c2VsbG8tY2Zk" SelloSAT="c2VsbG8tc2F0"/>
+  </cfdi:Complemento>
+</cfdi:Comprobante>

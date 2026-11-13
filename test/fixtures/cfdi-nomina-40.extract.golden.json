@@ -1,0 +1,51 @@
+{
+  "tipoDeComprobante": "N",
+  "fecha": "2024-01-15T10:30:00",
+  "emisorRfc": "EMP010101AAA",
+  "emisorRegimenFiscal": "601",
+  "receptorRfc": "REC010101AAA",
+  "receptorRegimenFiscalReceptor": "605",
+  "receptorUsoCFDI": "CN01",
+  "subtotal": 15500,
+  "descuento": 0,
+  "total": 15500,
+  "moneda": "MXN",
+  "tipoCambio": null,
+  "metodoPago": null,
+  "formaPago": null,
+  "totalImpuestosTrasladados": null,
+  "totalImpuestosRetenidos": null,
+  "trasladados": [],
+  "retenciones": [],
+  "conceptos": [
+    {
+      "claveProdServ": "84111505",
+      "cantidad": 1,
+      "claveUnidad": "ACT",
+      "descripcion": "Pago de nomina",
+      "valorUnitario": 15500,
+      "importe": 15500,
+      "objetoImp": "01"
+    }
+  ],
+  "pagosComplemento": null,
+  "nomina": {
+    "totalPercepciones": 20000,
+    "totalDeducciones": 4500,
+    "totalOtrosPagos": 0,
+    "deducciones": [
+      {
+        "tipoDeduccion": "002",
+        "importe": 1500,
+        "concepto": "ISR"
+      },
+      {
+        "tipoDeduccion": "001",
+        "importe": 3000,
+        "concepto": "Seguridad social"
+      }
+    ]
+  },
+  "cfdiRelacionados": null,
+  "uuid": "33333333-3333-3333-3333-333333333333"
+}

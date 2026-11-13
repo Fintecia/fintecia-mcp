@@ -1,0 +1,58 @@
+{
+  "tipoDeComprobante": "P",
+  "fecha": "2024-01-15T10:30:00",
+  "emisorRfc": "REC010101AAA",
+  "emisorRegimenFiscal": "601",
+  "receptorRfc": "XAXX010101000",
+  "receptorRegimenFiscalReceptor": "601",
+  "receptorUsoCFDI": "CP01",
+  "subtotal": 0,
+  "descuento": 0,
+  "total": 0,
+  "moneda": "XXX",
+  "tipoCambio": null,
+  "metodoPago": null,
+  "formaPago": null,
+  "totalImpuestosTrasladados": null,
+  "totalImpuestosRetenidos": null,
+  "trasladados": [],
+  "retenciones": [],
+  "conceptos": [
+    {
+      "claveProdServ": "84111506",
+      "cantidad": 1,
+      "claveUnidad": "ACT",
+      "descripcion": "Pago",
+      "valorUnitario": 0,
+      "importe": 0,
+      "objetoImp": "01"
+    }
+  ],
+  "pagosComplemento": {
+    "version": "2.0",
+    "pagos": [
+      {
+        "fechaPago": "2024-01-10T12:00:00",
+        "formaDePagoP": "03",
+        "monedaP": "MXN",
+        "tipoCambioP": 1,
+        "monto": 5000,
+        "doctosRelacionados": [
+          {
+            "idDocumento": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
+            "monedaDR": "MXN",
+            "tipoCambioDR": null,
+            "metodoDePagoDR": "",
+            "numParcialidad": "1",
+            "impSaldoAnt": 10000,
+            "impPagado": 5000,
+            "impSaldoInsoluto": 5000
+          }
+        ]
+      }
+    ]
+  },
+  "nomina": null,
+  "cfdiRelacionados": null,
+  "uuid": "44444444-4444-4444-4444-444444444444"
+}

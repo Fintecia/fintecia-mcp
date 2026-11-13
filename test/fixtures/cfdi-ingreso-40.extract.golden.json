@@ -1,0 +1,64 @@
+{
+  "tipoDeComprobante": "I",
+  "fecha": "2024-01-15T10:30:00",
+  "emisorRfc": "XAXX010101000",
+  "emisorRegimenFiscal": "601",
+  "receptorRfc": "AAA010101AAA",
+  "receptorRegimenFiscalReceptor": "601",
+  "receptorUsoCFDI": "G03",
+  "subtotal": 2000,
+  "descuento": 200,
+  "total": 2171.2,
+  "moneda": "MXN",
+  "tipoCambio": 1,
+  "metodoPago": "PUE",
+  "formaPago": "01",
+  "totalImpuestosTrasladados": 371.2,
+  "totalImpuestosRetenidos": 200,
+  "trasladados": [
+    {
+      "impuesto": "002",
+      "importe": 320
+    },
+    {
+      "impuesto": "003",
+      "importe": 51.2
+    }
+  ],
+  "retenciones": [
+    {
+      "impuesto": "001",
+      "importe": 200
+    }
+  ],
+  "conceptos": [
+    {
+      "claveProdServ": "01010101",
+      "cantidad": 2,
+      "claveUnidad": "H87",
+      "descripcion": "Servicio de consultoria",
+      "valorUnitario": 1000,
+      "importe": 2000,
+      "objetoImp": "02"
+    },
+    {
+      "claveProdServ": "43211600",
+      "cantidad": 1,
+      "claveUnidad": "H87",
+      "descripcion": "Equipo de computo",
+      "valorUnitario": 0,
+      "importe": 0,
+      "objetoImp": "01"
+    }
+  ],
+  "pagosComplemento": null,
+  "nomina": null,
+  "cfdiRelacionados": {
+    "tipoRelacion": "04",
+    "uuids": [
+      "11111111-1111-1111-1111-111111111111",
+      "22222222-2222-2222-2222-222222222222"
+    ]
+  },
+  "uuid": "6128396f-c09b-4ec6-8697-43d6e6ec1e51"
+}
