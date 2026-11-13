@@ -33,16 +33,33 @@ export interface TelemetryClientConfig {
   baseUrl?: string;
   fetchFn?: typeof fetch;
   maxBatchSize?: number;
-  agent?: string;
+  /**
+   * The MCP host identity. Either a static (already-resolved) name, or a lazy
+   * resolver read at emit time — after the `initialize` handshake has populated
+   * `clientInfo`. The resolver form is what `createServer` wires to
+   * `server.server.getClientVersion()`; the static form stays verbatim.
+   */
+  agent?: string | (() => string | undefined);
 }
 
 const DEFAULT_MAX_BATCH = 20;
+
+/**
+ * Canonicalizes a client name read from the `initialize` handshake for the
+ * `source.agent` field: trimmed and lowercased. Falls back to `"unknown"` when
+ * absent/empty — `clientInfo` is SHOULD, not MUST (spec PR #3002), so not all
+ * clients send it.
+ */
+export function normalizeAgent(name: string | undefined): string {
+  const normalized = name?.trim().toLowerCase();
+  return normalized || "unknown";
+}
 
 export class TelemetryClient {
   private readonly events: TelemetryEvent[] = [];
   private readonly installId = getInstallId();
   private readonly sessionId = randomUUID();
-  private readonly agent: string;
+  private readonly agent: string | (() => string | undefined);
   private flushing = false;
 
   constructor(private readonly config: TelemetryClientConfig = {}) {
@@ -53,11 +70,15 @@ export class TelemetryClient {
     }
   }
 
+  private resolveAgent(): string {
+    return typeof this.agent === "function" ? normalizeAgent(this.agent()) : this.agent;
+  }
+
   emit(event: string, data?: Record<string, unknown>): void {
     this.events.push({
       installId: this.installId,
       sessionId: this.sessionId,
-      source: { agent: this.agent, channel: null },
+      source: { agent: this.resolveAgent(), channel: null },
       event,
       timestamp: new Date().toISOString(),
       data,

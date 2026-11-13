@@ -1,4 +1,4 @@
-import { TelemetryClient } from "../src/telemetry/client.js";
+import { normalizeAgent, TelemetryClient } from "../src/telemetry/client.js";
 
 function mockFetch(handler: (input: string, init?: RequestInit) => Response) {
   return handler as unknown as typeof fetch;
@@ -6,11 +6,11 @@ function mockFetch(handler: (input: string, init?: RequestInit) => Response) {
 
 const ok = () => new Response("ok", { status: 200 });
 
-function capture(agent?: string) {
+function capture(agent?: string | (() => string | undefined)) {
   const state = { url: "", events: [] as Array<Record<string, unknown>> };
   const client = new TelemetryClient({
     baseUrl: "https://api.fintecia.example",
-    ...(agent ? { agent } : {}),
+    ...(agent !== undefined ? { agent } : {}),
     fetchFn: mockFetch((input, init) => {
       state.url = input;
       state.events = JSON.parse(String(init?.body)).events;
@@ -81,5 +81,39 @@ describe("TelemetryClient", () => {
     });
     client.emit("x");
     await expect(client.flush()).resolves.toBeUndefined();
+  });
+});
+
+describe("normalizeAgent", () => {
+  test("lowercases and trims the client name", () => {
+    expect(normalizeAgent("Claude Desktop")).toBe("claude desktop");
+    expect(normalizeAgent("  CURSOR  ")).toBe("cursor");
+  });
+
+  test("falls back to unknown when clientInfo is absent or empty", () => {
+    expect(normalizeAgent(undefined)).toBe("unknown");
+    expect(normalizeAgent("")).toBe("unknown");
+    expect(normalizeAgent("   ")).toBe("unknown");
+  });
+});
+
+describe("TelemetryClient agent resolver (initialize handshake)", () => {
+  test("resolves source.agent from clientInfo at emit time", async () => {
+    let name: string | undefined = "Claude Desktop";
+    const { client, state } = capture(() => name);
+
+    client.emit("tool_called", {});
+    await client.flush();
+
+    expect(state.events[0].source).toEqual({ agent: "claude desktop", channel: null });
+  });
+
+  test("falls back to unknown when the resolver yields no clientInfo", async () => {
+    const { client, state } = capture(() => undefined);
+
+    client.emit("tool_called", {});
+    await client.flush();
+
+    expect(state.events[0].source).toEqual({ agent: "unknown", channel: null });
   });
 });
