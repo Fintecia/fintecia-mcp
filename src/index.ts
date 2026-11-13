@@ -50,6 +50,7 @@ function createServer(): McpServer {
     fielProvider,
     uploadBaseUrl: API_BASE_URL,
     getAuthToken: async () => session.idToken,
+    emit: (event, data) => telemetry.emit(event, data),
     listEfirmas: async () => {
       const rfcs = await fielStore.list();
       return Promise.all(
@@ -114,7 +115,9 @@ function createServer(): McpServer {
     async () => {
       telemetry.emit("login_started");
       if (!onboard) {
-        onboard = await startOnboardServer(fielStore, session);
+        onboard = await startOnboardServer(fielStore, session, undefined, undefined, () =>
+          telemetry.emit("fiel_loaded"),
+        );
       }
       return {
         content: [

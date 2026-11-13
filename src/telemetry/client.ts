@@ -9,10 +9,21 @@ import { getInstallId } from "./installId.js";
  * Best-effort and fire-and-forget: telemetry NEVER blocks or fails a tool.
  */
 
+/**
+ * Where an install came from. `agent` is the MCP host that launched this
+ * server (Claude Desktop / Cursor / OpenCode / ChatGPT desktop / "unknown");
+ * `channel` is a nullable placeholder for a future referrer/UTM mechanism
+ * (npm exposes no download referrer today — see flujo-adquisicion.md §6).
+ */
+export interface TelemetrySource {
+  agent: string;
+  channel: string | null;
+}
+
 export interface TelemetryEvent {
   installId: string;
   sessionId: string;
-  agent: string;
+  source: TelemetrySource;
   event: string;
   timestamp: string;
   data?: Record<string, unknown>;
@@ -46,7 +57,7 @@ export class TelemetryClient {
     this.events.push({
       installId: this.installId,
       sessionId: this.sessionId,
-      agent: this.agent,
+      source: { agent: this.agent, channel: null },
       event,
       timestamp: new Date().toISOString(),
       data,

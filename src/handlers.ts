@@ -5,6 +5,7 @@ import {
   type DescargaTipo,
   type DownloadPhase,
   type DownloadArgs,
+  type Period,
 } from "./sat/parse.js";
 import { UploadClient, type UploadRejection } from "./sat/upload.js";
 import {
@@ -33,6 +34,14 @@ import { ReadClient } from "./fin/read.js";
 export type ToolResult = { content: Array<{ type: "text"; text: string }> };
 export type ToolHandler = (input: Record<string, unknown>) => Promise<ToolResult>;
 
+/** Emits a first-party telemetry event (event name + optional non-PII data). */
+export type TelemetryEmitter = (event: string, data?: Record<string, unknown>) => void;
+
+/** Minimal SAT DescargaMasiva port — injectable for tests (nodecfdi seam). */
+export interface DescargaClientPort {
+  descargar(material: FielMaterial, periodo: Period, tipo: DescargaTipo): Promise<string[]>;
+}
+
 export interface HandlerDeps {
   /** Local FIEL resolver. T1b wires the keychain; T2 ships the in-memory stub. */
   fielProvider?: FielProvider;
@@ -48,6 +57,10 @@ export interface HandlerDeps {
   getAuthToken?: () => Promise<string | null>;
   /** Injectable fetch for the upload client (tests). */
   fetchFn?: typeof fetch;
+  /** Emits activation telemetry events (download_*, upload_completed, ...). */
+  emit?: TelemetryEmitter;
+  /** Injectable SAT download client (tests); defaults to the nodecfdi client. */
+  descargaClient?: DescargaClientPort;
 }
 
 function stub(name: string): ToolHandler {
@@ -163,6 +176,9 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
       hasta: args.hasta,
       rfc: args.rfc,
     });
+    // Activation telemetry: the SAT download is about to start (gates passed).
+    // jobId is a session-local UUID — no RFC / raw args leak into telemetry.
+    deps.emit?.("download_started", { jobId: job.jobId });
     // Async by contract: fire the download+upload in the background, surface
     // the job id immediately. Failures land on the job (not lost): the agent
     // reads them via cfdi_download_status.
@@ -294,7 +310,6 @@ async function runDownloadJob(
   ctx: { deps: HandlerDeps; jobStore: JobStore },
 ): Promise<void> {
   const { deps, jobStore } = ctx;
-  const { DescargaClient } = await import("./sat/descarga.js");
 
   // Ensure the taxpayer is linked in Fintecia before uploading (S3: "vincular
   // cuenta↔taxpayer(RFC) [crear o unirse]"). The upload endpoint resolves the
@@ -327,9 +342,13 @@ async function runDownloadJob(
   const tipos: DescargaTipo[] =
     args.tipo === "ambos" ? ["emitidos", "recibidos"] : [args.tipo];
 
-  const client = new DescargaClient({
-    onPhase: (phase: DownloadPhase) => jobStore.update(job.jobId, { phase }),
-  });
+  // Inject a test double when provided; otherwise lazy-load the nodecfdi seam
+  // (kept out of jest's import graph).
+  const client: DescargaClientPort =
+    deps.descargaClient ??
+    new (await import("./sat/descarga.js")).DescargaClient({
+      onPhase: (phase: DownloadPhase) => jobStore.update(job.jobId, { phase }),
+    });
 
   const all: string[] = [];
   for (const tipo of tipos) {
@@ -353,6 +372,14 @@ async function runDownloadJob(
     all.push(...zips);
   }
 
+  // Activation telemetry: the SAT download phase finished. `first_use_completed`
+  // is the PQL / aha proxy ("uso sin entrega") — the agent completed a download
+  // with the locally-configured e-firma (never delivered). The "first" qualifier
+  // is a backend/BigQuery aggregation (first occurrence per install-id), since
+  // the stateless MCP cannot know about prior sessions. See flujo-adquisicion §2.
+  deps.emit?.("download_completed", { jobId: job.jobId, packages: all.length });
+  deps.emit?.("first_use_completed", { jobId: job.jobId });
+
   // No packages → nothing to upload; complete the job as an empty result.
   if (all.length === 0) {
     jobStore.update(job.jobId, {
@@ -366,6 +393,14 @@ async function runDownloadJob(
 
   jobStore.update(job.jobId, { phase: "upload" });
   const uploadResult = await uploadBatch(deps, args.rfc, all);
+
+  // Activation telemetry: the CFDI upload to the backend succeeded.
+  deps.emit?.("upload_completed", {
+    jobId: job.jobId,
+    accepted: uploadResult.accepted,
+    rejected: uploadResult.rejected.length,
+    cfdiCount: uploadResult.totalFiles,
+  });
 
   jobStore.update(job.jobId, {
     status: "completed",

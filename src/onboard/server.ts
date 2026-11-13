@@ -292,6 +292,7 @@ export function startOnboardServer(
   session: SessionStore = new SessionStore(),
   onAuth: (s: AuthSession) => void = () => {},
   keychain: Keychain = detectKeychain(process.platform),
+  onFielLoaded: () => void = () => {},
 ): Promise<{ server: Server; url: string }> {
   return new Promise((resolve) => {
     const server = createServer(
@@ -347,6 +348,9 @@ export function startOnboardServer(
             const key = decodeFileForFiel(keyB64, 'key');
             const { info } = inspectFiel(cer, key, password);
             await store.store({ rfc: info.rfc, certPem: info.pem, keyPem: key });
+            // Activation telemetry: the FIEL was validated (Autentica analog)
+            // and stored — emit fiel_loaded exactly once per successful load.
+            onFielLoaded();
             // The FIEL is stored regardless; the keychain write is best-effort
             // and reported separately so the user can act when the keyring is
             // unavailable (instead of a silent "success" that breaks signing).

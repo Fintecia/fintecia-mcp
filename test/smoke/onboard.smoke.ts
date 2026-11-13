@@ -19,7 +19,16 @@ const noopKeychain: Keychain = {
 
 const dir = mkdtempSync(path.join(tmpdir(), "onboard-"));
 const store = new FileFielStore(dir);
-const { server, url } = await startOnboardServer(store, undefined, undefined, noopKeychain);
+let fielLoadedCount = 0;
+const { server, url } = await startOnboardServer(
+  store,
+  undefined,
+  undefined,
+  noopKeychain,
+  () => {
+    fielLoadedCount++;
+  },
+);
 
 const auth = async () => {
   const res = await fetch(`${url}/auth`, {
@@ -46,6 +55,11 @@ try {
   const stored = await store.load("ABC831011XYZ");
   if (!stored) throw new Error("FIEL not stored after onboarding");
 
+  // fiel_loaded fires exactly once, on FIEL validation + storage success.
+  if (fielLoadedCount !== 1) {
+    throw new Error(`fiel_loaded not emitted exactly once (count=${fielLoadedCount})`);
+  }
+
   // A corrupt key must be rejected, not stored.
   const bad = await fetch(`${url}/fiel`, {
     method: "POST",
@@ -53,6 +67,11 @@ try {
     body: JSON.stringify({ cerB64, keyB64: Buffer.from("corrupt").toString("base64"), password: "" }),
   });
   if (bad.status !== 400) throw new Error("expected 400 on corrupt key");
+
+  // A rejected FIEL must NOT emit fiel_loaded again.
+  if (fielLoadedCount !== 1) {
+    throw new Error(`fiel_loaded emitted on a rejected FIEL (count=${fielLoadedCount})`);
+  }
 
   // /efirmas lists stored e-firmas (RFC + keyring password status); /refiel re-persists the password.
   const efirmasRes = await fetch(`${url}/efirmas`);
