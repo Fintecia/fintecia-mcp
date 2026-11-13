@@ -46,7 +46,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "jest",
-    "test:smoke": "tsx test/smoke/fiel.smoke.ts && tsx test/smoke/onboard.smoke.ts && tsx test/smoke/descarga.smoke.ts && tsx test/smoke/handlers.smoke.ts",
+    "test:smoke": "tsx test/smoke/fiel.smoke.ts && tsx test/smoke/onboard.smoke.ts && tsx test/smoke/descarga.smoke.ts && tsx test/smoke/handlers.smoke.ts && tsx test/smoke/telemetry-events.smoke.ts && tsx test/smoke/agent-detection.smoke.ts",
     "onboard": "tsx src/onboard/cli.ts"
   },
   "dependencies": {

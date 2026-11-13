@@ -9,10 +9,21 @@ import { getInstallId } from "./installId.js";
  * Best-effort and fire-and-forget: telemetry NEVER blocks or fails a tool.
  */
 
+/**
+ * Where an install came from. `agent` is the MCP host that launched this
+ * server (Claude Desktop / Cursor / OpenCode / ChatGPT desktop / "unknown");
+ * `channel` is a nullable placeholder for a future referrer/UTM mechanism
+ * (npm exposes no download referrer today — see flujo-adquisicion.md §6).
+ */
+export interface TelemetrySource {
+  agent: string;
+  channel: string | null;
+}
+
 export interface TelemetryEvent {
   installId: string;
   sessionId: string;
-  agent: string;
+  source: TelemetrySource;
   event: string;
   timestamp: string;
   data?: Record<string, unknown>;
@@ -22,31 +33,61 @@ export interface TelemetryClientConfig {
   baseUrl?: string;
   fetchFn?: typeof fetch;
   maxBatchSize?: number;
-  agent?: string;
+  /**
+   * The MCP host identity. Either a static (already-resolved) name, or a lazy
+   * resolver read at emit time — after the `initialize` handshake has populated
+   * `clientInfo`. The resolver form is what `createServer` wires to
+   * `server.server.getClientVersion()`; the static form stays verbatim.
+   */
+  agent?: string | (() => string | undefined);
+  /**
+   * Telemetry opt-out (product decision, flujo-adquisicion.md §3c): default ON.
+   * When `false`, `emit()` is a no-op — events are neither buffered nor flushed.
+   * Production derives it from the `FINTECIA_TELEMETRY` env var (`off` / `0`).
+   */
+  enabled?: boolean;
 }
 
 const DEFAULT_MAX_BATCH = 20;
+
+/**
+ * Canonicalizes a client name read from the `initialize` handshake for the
+ * `source.agent` field: trimmed and lowercased. Falls back to `"unknown"` when
+ * absent/empty — `clientInfo` is SHOULD, not MUST (spec PR #3002), so not all
+ * clients send it.
+ */
+export function normalizeAgent(name: string | undefined): string {
+  const normalized = name?.trim().toLowerCase();
+  return normalized || "unknown";
+}
 
 export class TelemetryClient {
   private readonly events: TelemetryEvent[] = [];
   private readonly installId = getInstallId();
   private readonly sessionId = randomUUID();
-  private readonly agent: string;
+  private readonly agent: string | (() => string | undefined);
+  private readonly enabled: boolean;
   private flushing = false;
 
   constructor(private readonly config: TelemetryClientConfig = {}) {
     this.agent = config.agent ?? "unknown";
+    this.enabled = config.enabled ?? true;
     // Flush any buffered events on shutdown (best-effort).
     for (const signal of ["SIGINT", "SIGTERM"] as const) {
       process.once(signal, () => void this.flush());
     }
   }
 
+  private resolveAgent(): string {
+    return typeof this.agent === "function" ? normalizeAgent(this.agent()) : this.agent;
+  }
+
   emit(event: string, data?: Record<string, unknown>): void {
+    if (!this.enabled) return;
     this.events.push({
       installId: this.installId,
       sessionId: this.sessionId,
-      agent: this.agent,
+      source: { agent: this.resolveAgent(), channel: null },
       event,
       timestamp: new Date().toISOString(),
       data,
