@@ -40,6 +40,12 @@ export interface TelemetryClientConfig {
    * `server.server.getClientVersion()`; the static form stays verbatim.
    */
   agent?: string | (() => string | undefined);
+  /**
+   * Telemetry opt-out (product decision, flujo-adquisicion.md §3c): default ON.
+   * When `false`, `emit()` is a no-op — events are neither buffered nor flushed.
+   * Production derives it from the `FINTECIA_TELEMETRY` env var (`off` / `0`).
+   */
+  enabled?: boolean;
 }
 
 const DEFAULT_MAX_BATCH = 20;
@@ -60,10 +66,12 @@ export class TelemetryClient {
   private readonly installId = getInstallId();
   private readonly sessionId = randomUUID();
   private readonly agent: string | (() => string | undefined);
+  private readonly enabled: boolean;
   private flushing = false;
 
   constructor(private readonly config: TelemetryClientConfig = {}) {
     this.agent = config.agent ?? "unknown";
+    this.enabled = config.enabled ?? true;
     // Flush any buffered events on shutdown (best-effort).
     for (const signal of ["SIGINT", "SIGTERM"] as const) {
       process.once(signal, () => void this.flush());
@@ -75,6 +83,7 @@ export class TelemetryClient {
   }
 
   emit(event: string, data?: Record<string, unknown>): void {
+    if (!this.enabled) return;
     this.events.push({
       installId: this.installId,
       sessionId: this.sessionId,

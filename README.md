@@ -135,7 +135,8 @@ Qué se queda local y qué se envía a Fintecia — transparente, sin letra chic
   reservado a futuro —hoy `null`—, qué herramienta invocaste, resultado y duración) y
   eventos de activación (`fiel_loaded`, `download_started`/`download_completed`,
   `upload_completed`, `first_use_completed`). **No** se envían tus prompts,
-  conversaciones ni los argumentos de las herramientas.
+  conversaciones ni los argumentos de las herramientas. Es **opt-out**: podés
+  apagarla con la variable de entorno `FINTECIA_TELEMETRY=off` (o `0`).
 - El servidor es **local** (corre por stdio, en tu máquina) y **sin secretos**:
   la autenticación es OAuth de *loopback* — tu navegador hace el login y el token
   queda en memoria, no en disco.

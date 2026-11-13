@@ -48,8 +48,14 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
   const keychain = detectKeychain(process.platform);
   const fielProvider = new KeychainFielProvider(fielStore, keychain);
 
+  // Telemetry opt-out (product decision, flujo-adquisicion.md §3c): default ON.
+  // `FINTECIA_TELEMETRY=off|0` disables it (anonymous events are never sent).
+  const telemetryEnabled =
+    process.env.FINTECIA_TELEMETRY !== "off" && process.env.FINTECIA_TELEMETRY !== "0";
+
   const telemetry = new TelemetryClient({
     baseUrl: API_BASE_URL,
+    enabled: telemetryEnabled,
     ...options.telemetry,
     // Resolved lazily at emit time (after the initialize handshake): the MCP
     // client's `clientInfo.name` (Claude Desktop / Cursor / OpenCode / ChatGPT

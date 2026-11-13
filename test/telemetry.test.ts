@@ -82,6 +82,21 @@ describe("TelemetryClient", () => {
     client.emit("x");
     await expect(client.flush()).resolves.toBeUndefined();
   });
+
+  test("opt-out: emit is a no-op when enabled=false (FINTECIA_TELEMETRY=off)", async () => {
+    let called = false;
+    const client = new TelemetryClient({
+      baseUrl: "https://x",
+      enabled: false,
+      fetchFn: mockFetch(() => {
+        called = true;
+        return ok();
+      }),
+    });
+    client.emit("tool_called", {});
+    await client.flush();
+    expect(called).toBe(false);
+  });
 });
 
 describe("normalizeAgent", () => {
