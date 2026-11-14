@@ -1,0 +1,67 @@
+{
+  "version": "4.0",
+  "serie": "N",
+  "folio": "1",
+  "fecha": "2024-01-15T10:30:00",
+  "formaPago": null,
+  "subtotal": 15500,
+  "descuento": 0,
+  "moneda": "MXN",
+  "tipoCambio": null,
+  "total": 15500,
+  "tipoDeComprobante": "N",
+  "metodoPago": null,
+  "lugarExpedicion": "06600",
+  "exportacion": "01",
+  "emisorRfc": "EMP010101AAA",
+  "emisorNombre": "EMPLEADOR SA DE CV",
+  "emisorRegimenFiscal": "601",
+  "receptorRfc": "REC010101AAA",
+  "receptorNombre": "EMPLEADO PEREZ",
+  "receptorDomicilioFiscalReceptor": "06600",
+  "receptorRegimenFiscalReceptor": "605",
+  "receptorUsoCFDI": "CN01",
+  "conceptos": [
+    {
+      "claveProdServ": "84111505",
+      "cantidad": 1,
+      "claveUnidad": "ACT",
+      "descripcion": "Pago de nomina",
+      "valorUnitario": 15500,
+      "importe": 15500,
+      "objetoImp": "01"
+    }
+  ],
+  "totalImpuestosTrasladados": null,
+  "totalImpuestosRetenidos": null,
+  "trasladados": [],
+  "retenciones": [],
+  "nomina": {
+    "totalPercepciones": 20000,
+    "totalDeducciones": 4500,
+    "totalOtrosPagos": 0,
+    "deducciones": [
+      {
+        "tipoDeduccion": "002",
+        "importe": 1500,
+        "concepto": "ISR"
+      },
+      {
+        "tipoDeduccion": "001",
+        "importe": 3000,
+        "concepto": "Seguridad social"
+      }
+    ]
+  },
+  "uuid": "33333333-3333-3333-3333-333333333333",
+  "fechaTimbrado": "2024-01-15T10:30:01",
+  "rfcProvCertif": "CVD100101TFD",
+  "selloCFD": "c2VsbG8tY2Zk",
+  "noCertificadoSAT": "00001000000508664968",
+  "selloSAT": "c2VsbG8tc2F0",
+  "cfdiRelacionados": null,
+  "pagosComplemento": null,
+  "motivoCancelacion": null,
+  "estatus": "vigente",
+  "fechaCancelacion": null
+}

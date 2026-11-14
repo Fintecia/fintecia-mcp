@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xmlns:nomina12="http://www.sat.gob.mx/nomina12" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Serie="N" Folio="1" Fecha="2024-01-15T10:30:00" SubTotal="15500.00" Moneda="MXN" Total="15500.00" TipoDeComprobante="N" Exportacion="01" LugarExpedicion="06600">
+  <cfdi:Emisor Rfc="EMP010101AAA" Nombre="EMPLEADOR SA DE CV" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="REC010101AAA" Nombre="EMPLEADO PEREZ" DomicilioFiscalReceptor="06600" RegimenFiscalReceptor="605" UsoCFDI="CN01"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="84111505" Cantidad="1" ClaveUnidad="ACT" Descripcion="Pago de nomina" ValorUnitario="15500.00" Importe="15500.00" ObjetoImp="01"/>
+  </cfdi:Conceptos>
+  <cfdi:Complemento>
+    <nomina12:Nomina Version="1.2" TipoNomina="O" FechaPago="2024-01-15" FechaInicialPago="2024-01-01" FechaFinalPago="2024-01-15" NumDiasPagados="15.000" TotalPercepciones="20000.00" TotalDeducciones="4500.00" TotalOtrosPagos="0.00">
+      <nomina12:Deducciones TotalImpuestosRetenidos="1500.00" TotalOtrasDeducciones="3000.00">
+        <nomina12:Deduccion TipoDeduccion="002" Clave="002" Concepto="ISR" Importe="1500.00"/>
+        <nomina12:Deduccion TipoDeduccion="001" Clave="001" Concepto="Seguridad social" Importe="3000.00"/>
+      </nomina12:Deducciones>
+    </nomina12:Nomina>
+    <tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" Version="1.1" UUID="33333333-3333-3333-3333-333333333333" FechaTimbrado="2024-01-15T10:30:01" RfcProvCertif="CVD100101TFD" NoCertificadoSAT="00001000000508664968" SelloCFD="c2VsbG8tY2Zk" SelloSAT="c2VsbG8tc2F0"/>
+  </cfdi:Complemento>
+</cfdi:Comprobante>

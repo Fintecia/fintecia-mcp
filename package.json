@@ -46,12 +46,15 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "jest",
-    "test:smoke": "tsx test/smoke/fiel.smoke.ts && tsx test/smoke/onboard.smoke.ts && tsx test/smoke/descarga.smoke.ts && tsx test/smoke/handlers.smoke.ts && tsx test/smoke/telemetry-events.smoke.ts && tsx test/smoke/agent-detection.smoke.ts",
+    "test:smoke": "tsx test/smoke/fiel.smoke.ts && tsx test/smoke/onboard.smoke.ts && tsx test/smoke/descarga.smoke.ts && tsx test/smoke/handlers.smoke.ts && tsx test/smoke/telemetry-events.smoke.ts && tsx test/smoke/agent-detection.smoke.ts && tsx test/smoke/cfdi-seal.smoke.ts",
     "onboard": "tsx src/onboard/cli.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.3.0",
+    "@nodecfdi/cfdiutils-core": "^0.7.1",
+    "@nodecfdi/credentials": "^3.2.0",
     "@nodecfdi/sat-ws-descarga-masiva": "^2.0.0",
+    "fast-xml-parser": "5.12.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
@@ -63,5 +66,9 @@
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.0.0"
+  },
+  "overrides": {
+    "jsrsasign": "11.1.1",
+    "file-type": "21.3.4"
   }
 }

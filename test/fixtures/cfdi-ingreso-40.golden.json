@@ -1,0 +1,80 @@
+{
+  "version": "4.0",
+  "serie": "A",
+  "folio": "12345",
+  "fecha": "2024-01-15T10:30:00",
+  "formaPago": "01",
+  "subtotal": 2000,
+  "descuento": 200,
+  "moneda": "MXN",
+  "tipoCambio": 1,
+  "total": 2171.2,
+  "tipoDeComprobante": "I",
+  "metodoPago": "PUE",
+  "lugarExpedicion": "06600",
+  "exportacion": "01",
+  "emisorRfc": "XAXX010101000",
+  "emisorNombre": "EMISOR TEST SA DE CV",
+  "emisorRegimenFiscal": "601",
+  "receptorRfc": "AAA010101AAA",
+  "receptorNombre": "RECEPTOR TEST SA DE CV",
+  "receptorDomicilioFiscalReceptor": "06600",
+  "receptorRegimenFiscalReceptor": "601",
+  "receptorUsoCFDI": "G03",
+  "conceptos": [
+    {
+      "claveProdServ": "01010101",
+      "cantidad": 2,
+      "claveUnidad": "H87",
+      "descripcion": "Servicio de consultoria",
+      "valorUnitario": 1000,
+      "importe": 2000,
+      "objetoImp": "02"
+    },
+    {
+      "claveProdServ": "43211600",
+      "cantidad": 1,
+      "claveUnidad": "H87",
+      "descripcion": "Equipo de computo",
+      "valorUnitario": 0,
+      "importe": 0,
+      "objetoImp": "01"
+    }
+  ],
+  "totalImpuestosTrasladados": 371.2,
+  "totalImpuestosRetenidos": 200,
+  "trasladados": [
+    {
+      "impuesto": "002",
+      "importe": 320
+    },
+    {
+      "impuesto": "003",
+      "importe": 51.2
+    }
+  ],
+  "retenciones": [
+    {
+      "impuesto": "001",
+      "importe": 200
+    }
+  ],
+  "nomina": null,
+  "uuid": "6128396f-c09b-4ec6-8697-43d6e6ec1e51",
+  "fechaTimbrado": "2024-01-15T10:30:01",
+  "rfcProvCertif": "CVD100101TFD",
+  "selloCFD": "c2VsbG8tY2Zk",
+  "noCertificadoSAT": "00001000000508664968",
+  "selloSAT": "c2VsbG8tc2F0",
+  "cfdiRelacionados": {
+    "tipoRelacion": "04",
+    "uuids": [
+      "11111111-1111-1111-1111-111111111111",
+      "22222222-2222-2222-2222-222222222222"
+    ]
+  },
+  "pagosComplemento": null,
+  "motivoCancelacion": null,
+  "estatus": "vigente",
+  "fechaCancelacion": null
+}
