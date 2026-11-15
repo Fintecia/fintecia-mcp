@@ -5,8 +5,8 @@ import { z } from "zod";
  *
  * Design contract (odd/tasks/mcp-local.md, work_items/179):
  * - "El agente razona, Fintecia calcula": tools `fintecia_*` return materialized
- *   results; the agent must NEVER re-sum raw data. Raw (`fintecia_cfdi`,
- *   `fintecia_transactions`) is for inspection only.
+ *   results; the agent must NEVER re-sum raw data. Raw (`fintecia_transactions`)
+ *   is for inspection only.
  * - Everything is read-only EXCEPT `cfdi_download` (triggers DescargaMasiva +
  *   upload), which carries `destructiveHint`.
  * - The local e-firma never leaves the machine; Fintecia only receives CFDI.
@@ -165,22 +165,6 @@ export const TOOLS: ToolDef[] = [
     inputSchema: z.object({
       taxpayerRfc: z.string().describe("RFC del contribuyente."),
       query: z.string().optional().describe("Texto a buscar (descripción, referencia, UUID)."),
-      limit: z.number().int().min(1).max(100).optional(),
-    }),
-    annotations: { readOnlyHint: true },
-  },
-  {
-    name: "fintecia_cfdi",
-    description:
-      "Search/view emitted and received invoices. Use to inspect WHICH transactions " +
-      "are behind a number; never to sum totals.",
-    inputSchema: z.object({
-      taxpayerRfc: z.string().describe("RFC del contribuyente."),
-      query: z.string().optional().describe("Texto a buscar (razón social, UUID, etc.)."),
-      emisorRfc: z.string().optional(),
-      receptorRfc: z.string().optional(),
-      fechaStart: z.string().optional().describe("YYYY-MM-DD."),
-      fechaEnd: z.string().optional().describe("YYYY-MM-DD."),
       limit: z.number().int().min(1).max(100).optional(),
     }),
     annotations: { readOnlyHint: true },

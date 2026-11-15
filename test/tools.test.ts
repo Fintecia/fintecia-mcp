@@ -28,7 +28,7 @@ describe("tool registry", () => {
     expect(missingReadOnly).toEqual([]);
   });
 
-  test("registry exposes the 18 expected tools", () => {
-    expect(TOOLS.length).toBe(18);
+  test("registry exposes the 17 expected tools", () => {
+    expect(TOOLS.length).toBe(17);
   });
 });
