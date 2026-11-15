@@ -104,7 +104,6 @@ cliente para la sintaxis exacta.
 | `fintecia_tax_summary` | Resumen de ISR/IVA por periodo. |
 | `fintecia_reconciliation` | Estado de la conciliación banco ↔ CFDI. |
 | `fintecia_transactions` | Ingresos/gastos (dato crudo, solo para inspección). |
-| `fintecia_cfdi` | Buscar / ver facturas (dato crudo, solo para inspección). |
 | `fintecia_risk_report` | Cruce de tus contrapartes contra las listas 69-B / 69. |
 | `fintecia_risk_check` | Ficha de riesgo de un proveedor (RFC puntual). |
 | `fintecia_deductibility` | Veredicto de deducibilidad por gasto, con evidencia. |

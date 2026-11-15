@@ -288,12 +288,6 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
     return json(await readClient.read("/api/v1/mcp/reconciliation", taxpayerRfc));
   });
 
-  handlers.set("fintecia_cfdi", async (input) => {
-    const taxpayerRfc = String(input.taxpayerRfc ?? "");
-    const { taxpayerRfc: _t, ...filters } = input;
-    return json(await readClient.read("/api/v1/mcp/cfdi", taxpayerRfc, filters));
-  });
-
   handlers.set("fintecia_risk_report", async (input) => {
     const taxpayerRfc = String(input.taxpayerRfc ?? "");
     return json(await readClient.read("/api/v1/mcp/risk-report", taxpayerRfc));
