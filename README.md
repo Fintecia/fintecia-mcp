@@ -142,6 +142,12 @@ Qué se queda local y qué se envía a Fintecia — transparente, sin letra chic
   queda en memoria, no en disco.
 - Todo acceso a tus datos pasa por tu sesión autenticada.
 
+## Supply-chain
+
+- **Dependencias pineadas** (sin rangos `^`): versiones exactas en `package.json` + `package-lock.json`, para builds reproducibles.
+- **Overrides de seguridad** para vulnerabilidades transitivas conocidas (`jsrsasign`, `file-type`, `deepmerge`, `minimatch`).
+- **Riesgo aceptado (nodecfdi):** las dependencias `@nodecfdi/*` (descarga masiva SAT, credentials) traen un script `preinstall: npx only-allow pnpm` — benigno (solo fuerza pnpm en el repo upstream), pero es un install-script que Socket.dev marca. Se mantiene documentado como riesgo aceptado: no ejecuta código dañino, y no hay alternativa sin re-vendorear el ecosistema nodecfdi.
+
 ## Licencia
 
 MIT
