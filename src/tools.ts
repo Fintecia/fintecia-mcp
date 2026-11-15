@@ -118,6 +118,34 @@ export const TOOLS: ToolDef[] = [
     annotations: { readOnlyHint: true },
   },
 
+  // ── Read local (S4) — metadata + XML crudo desde zips locales ───────────
+  {
+    name: "cfdi_local_search",
+    description:
+      "List/search CFDI by metadata (emisorNombre, receptorNombre, serie, folio, " +
+      "uuid) reading the LOCAL downloaded zips (~/.fintecia/mcp/downloads), NOT " +
+      "the backend. Call with no query to list everything; pass a query to filter. " +
+      "Returns metadata entries (uuid, emisor/receptor nombre + RFC, serie, folio, " +
+      "fecha, total). Local read — no Fintecia account/backend needed.",
+    inputSchema: z.object({
+      query: z.string().optional().describe("Texto a buscar (nombre emisor/receptor, serie, folio o UUID)."),
+      limit: z.number().int().min(1).max(100).optional().describe("Máx resultados (default 100)."),
+    }),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "cfdi_local_detail",
+    description:
+      "Return the raw CFDI XML for a UUID from the local downloaded zips. Use " +
+      "after cfdi_local_search to inspect the full invoice (the backend drops the " +
+      "raw XML after processing, so the local zip is the only surviving copy). " +
+      "Local read — no Fintecia account/backend needed.",
+    inputSchema: z.object({
+      uuid: z.string().describe("Folio fiscal (UUID) del CFDI a leer."),
+    }),
+    annotations: { readOnlyHint: true },
+  },
+
   // ── Fintecia (auth, materializado) ──────────────────────────────────────
   {
     name: "fintecia_profile",
