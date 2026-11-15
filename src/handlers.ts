@@ -21,6 +21,12 @@ import {
   type DownloadArtifactStore,
 } from "./sat/artifacts.js";
 import { ReadClient } from "./fin/read.js";
+import {
+  CfdiIndexStore,
+  defaultDownloadsDir,
+  defaultIndexFile,
+} from "./fin/cfdiIndex.js";
+import { readCfdiXml, searchEntries } from "./fin/readLocal.js";
 
 /**
  * Tool handlers. Real implementations are wired here as they land (T1b+);
@@ -61,6 +67,10 @@ export interface HandlerDeps {
   emit?: TelemetryEmitter;
   /** Injectable SAT download client (tests); defaults to the nodecfdi client. */
   descargaClient?: DescargaClientPort;
+  /** Local CFDI zip dir for read-local (T4). Defaults to ~/.fintecia/mcp/downloads. */
+  cfdiLocalDir?: string;
+  /** Local CFDI metadata index file (T4). Defaults to ~/.fintecia/mcp/cfdi-index.json. */
+  cfdiIndexFile?: string;
 }
 
 function stub(name: string): ToolHandler {
@@ -225,6 +235,36 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
         cfdiCount: last.result?.cfdiCount ?? 0,
       },
     });
+  });
+
+  // S4 — read-local: metadata + raw XML desde los zips locales (nunca el
+  // backend). El índice se (re)construye bajo demanda desde los zips y se
+  // cachea en disco (A3); el detail lee el zip puntual.
+  const cfdiDownloadsDir = deps.cfdiLocalDir ?? defaultDownloadsDir();
+  const cfdiIndex = new CfdiIndexStore({
+    downloadsDir: cfdiDownloadsDir,
+    indexFile: deps.cfdiIndexFile ?? defaultIndexFile(),
+  });
+
+  handlers.set("cfdi_local_search", async (input) => {
+    const entries = await cfdiIndex.entries();
+    const query = String(input.query ?? "");
+    const limit = typeof input.limit === "number" ? input.limit : 100;
+    const results = searchEntries(entries, query, limit);
+    return json({ count: results.length, cfdis: results });
+  });
+
+  handlers.set("cfdi_local_detail", async (input) => {
+    const uuid = String(input.uuid ?? "").trim();
+    if (!uuid) {
+      throw new Error("cfdi_local_detail: uuid es requerido");
+    }
+    const entries = await cfdiIndex.entries();
+    const entry = entries.find((e) => e.uuid === uuid);
+    if (!entry) {
+      throw new Error(`CFDI no encontrado en los zips locales: ${uuid}`);
+    }
+    return text(await readCfdiXml(cfdiDownloadsDir, entry));
   });
 
   handlers.set("fintecia_efirmas", async () => {
