@@ -19,7 +19,7 @@ que **nunca sale de tu máquina**.
 
 ## Estado del proyecto
 
-Esta es una **primera versión (1.0.1)**. Lo disponible hoy:
+Esta es una **versión temprana (1.1.0)**. Lo disponible hoy:
 
 - ✅ Descarga de CFDI del SAT con e-firma local + materialización en Fintecia.
 - ✅ Consultas materializadas: `fintecia_financials` (estados NIF B-3/B-6),
@@ -35,7 +35,7 @@ Esta es una **primera versión (1.0.1)**. Lo disponible hoy:
 
 - **Node.js 20 o superior.**
 - **Cuenta de Fintecia** para las herramientas `fintecia_*` (login con Google).
-- **e-firma** (`.cer` + `.key` + contraseña) solo si querés descargar CFDIs del SAT.
+- **e-firma** (`.cer` + `.key` + contraseña) solo si quieres descargar CFDIs del SAT.
   Sin e-firma, las consultas públicas y las de tu cuenta siguen funcionando.
 
 ## Instalación
@@ -51,7 +51,7 @@ definido en `package.json` `bin`). No hace falta clonar el repo ni compilar.
 
 ### 2. Registrar el servidor en tu cliente MCP
 
-Agregá una entrada `fintecia` apuntando al binario `fintecia-mcp`. En **Claude
+Agrega una entrada `fintecia` apuntando al binario `fintecia-mcp`. En **Claude
 Desktop** (`claude_desktop_config.json`):
 
 ```json
@@ -72,8 +72,8 @@ cliente para la sintaxis exacta.
 ### 3. Primer uso: login + e-firma
 
 1. Pedile a tu agente que ejecute la herramienta **`fintecia_login`**.
-2. Abrí en tu navegador la URL local que devuelve.
-3. Iniciá sesión con Google y cargá tu e-firma (`.cer` + `.key` + contraseña).
+2. Abre en tu navegador la URL local que devuelve.
+3. Inicia sesión con Google y carga tu e-firma (`.cer` + `.key` + contraseña).
 4. Listo: tu agente queda autenticado y vinculado a tu RFC.
 
 ## Herramientas
@@ -100,7 +100,7 @@ cliente para la sintaxis exacta.
 | Herramienta | Qué hace |
 |---|---|
 | `fintecia_profile` | Tu usuario y los contribuyentes a los que estás vinculado. |
-| `fintecia_financials` | Balances y razones materializados — usá esto para responder "cuánto". |
+| `fintecia_financials` | Balances y razones materializados — usa esto para responder "cuánto". |
 | `fintecia_tax_summary` | Resumen de ISR/IVA por periodo. |
 | `fintecia_reconciliation` | Estado de la conciliación banco ↔ CFDI. |
 | `fintecia_transactions` | Ingresos/gastos (dato crudo, solo para inspección). |
@@ -108,7 +108,7 @@ cliente para la sintaxis exacta.
 | `fintecia_risk_check` | Ficha de riesgo de un proveedor (RFC puntual). |
 | `fintecia_deductibility` | Veredicto de deducibilidad por gasto, con evidencia. |
 
-> **El agente razona, Fintecia calcula.** Para responder "cuánto" usá siempre las
+> **El agente razona, Fintecia calcula.** Para responder "cuánto" usa siempre las
 > herramientas materializadas (`fintecia_financials`, `fintecia_tax_summary`); las
 > herramientas `_transactions` / `_cfdi` son solo para inspeccionar qué hay detrás de
 > un número, nunca para re-sumarlo.
@@ -126,15 +126,19 @@ Qué se queda local y qué se envía a Fintecia — transparente, sin letra chic
 - **Tu e-firma nunca sale de tu máquina**: se guarda en el keychain del sistema
   (macOS Keychain / Windows Credential Manager / Linux libsecret). Ni el `.key`
   ni tu contraseña se transmiten a Fintecia ni al agente.
-- **Tus CFDI (facturas) sí se suben a los servidores de Fintecia** (Google Cloud)
-  para materializar tus estados financieros, impuestos y conciliación.
-  Es lo que permite que el agente responda "cuánto" con tus números reales.
+- **Solo se envía el extracto contable, nunca la factura completa**: el MCP
+  parsea cada CFDI localmente y envía a Fintecia únicamente el extracto contable
+  (RFCs, régimen fiscal, importes, impuestos, conceptos, forma/método de pago y
+  UUID) para materializar tus estados financieros, impuestos y conciliación. La
+  factura cruda (XML), los datos identificativos (razón social, serie, folio,
+  lugar de expedición) y la firma criptográfica (selloCFD/selloSAT, timbrado)
+  permanecen en tu máquina y nunca se transmiten.
 - **Telemetría anónima**: el MCP envía eventos de uso (id de instalación y de sesión
-  como UUID, un campo `source` con el agente que usás + un `channel` de referrer
+  como UUID, un campo `source` con el agente que usas + un `channel` de referrer
   reservado a futuro —hoy `null`—, qué herramienta invocaste, resultado y duración) y
   eventos de activación (`fiel_loaded`, `download_started`/`download_completed`,
   `upload_completed`, `first_use_completed`). **No** se envían tus prompts,
-  conversaciones ni los argumentos de las herramientas. Es **opt-out**: podés
+  conversaciones ni los argumentos de las herramientas. Es **opt-out**: puedes
   apagarla con la variable de entorno `FINTECIA_TELEMETRY=off` (o `0`).
 - El servidor es **local** (corre por stdio, en tu máquina) y **sin secretos**:
   la autenticación es OAuth de *loopback* — tu navegador hace el login y el token

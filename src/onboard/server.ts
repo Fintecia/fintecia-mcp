@@ -107,8 +107,8 @@ function html(config: Record<string, string>, localAuthUrl: string | null): stri
 <div class="card">
   <div id="screenLogin">
   <div class="logo">F</div>
-  <h1>Conectá tu cuenta</h1>
-  <p class="subtitle">Iniciá sesión con Google para continuar. Tus llaves nunca salen de esta máquina.</p>
+  <h1>Conecta tu cuenta</h1>
+  <p class="subtitle">Inicia sesión con Google para continuar. Tus llaves nunca salen de esta máquina.</p>
 
   <button id="signin" class="btn">
     <svg class="g" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.45a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.57-5.17 3.57-8.81z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.88-3c-1.08.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.95H1.28v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.29 14.29a7.2 7.2 0 0 1 0-4.58v-3.1H1.28a12 12 0 0 0 0 10.78l4.01-3.1z"/><path fill="#EA4335" d="M12 4.76c1.76 0 3.34.6 4.58 1.79l3.44-3.44A11.98 11.98 0 0 0 1.28 6.61l4.01 3.1C6.23 6.87 8.88 4.76 12 4.76z"/></svg>
@@ -123,14 +123,14 @@ function html(config: Record<string, string>, localAuthUrl: string | null): stri
   <p class="subtitle">Estas son las e-firmas guardadas en esta máquina.</p>
   <div id="efirmaList"></div>
   <button id="addFirma" class="btn btn-primary">Agregar otra e-firma</button>
-  <p class="hint">Ya podés cerrar esta ventana y volver al agente para pedir tus facturas.</p>
+  <p class="hint">Ya puedes cerrar esta ventana y volver al agente para pedir tus facturas.</p>
   <div id="listOut" class="status"></div>
   </div>
 
   <div id="screenAdd" style="display:none">
   <div class="logo">F</div>
-  <h1>Conectá tu e-firma</h1>
-  <p class="subtitle">Subí tu certificado y llave privada para que el agente pueda descargar tus facturas.</p>
+  <h1>Conecta tu e-firma</h1>
+  <p class="subtitle">Sube tu certificado y llave privada para que el agente pueda descargar tus facturas.</p>
   <form id="f">
     <label for="cer">Certificado (.cer)</label>
     <input class="file" id="cer" type="file" accept=".cer,.pem,.crt">
@@ -206,7 +206,7 @@ $("f").addEventListener("submit", async (e) => {
     const body = await res.json();
     if (body.ok) {
       if (body.passwordPersisted === false) {
-        status($("listOut"), "E-firma válida · RFC " + body.rfc + ". PERO no pude guardar la contraseña en el keyring (" + (body.keychainError || "keyring no disponible") + "). Re-ingresala en la lista.", "err");
+        status($("listOut"), "E-firma válida · RFC " + body.rfc + ". PERO no pude guardar la contraseña en el keyring (" + (body.keychainError || "keyring no disponible") + "). Reingrésala en la lista.", "err");
       }
       $("f").reset();
       await refreshList();
@@ -335,7 +335,7 @@ export function startOnboardServer(
 
         if (req.method === "POST" && req.url === "/fiel") {
           if (!session.idToken) {
-            send(401, { ok: false, error: "iniciá sesión primero (Google)" });
+            send(401, { ok: false, error: "inicia sesión primero (Google)" });
             return;
           }
           try {
@@ -371,7 +371,7 @@ export function startOnboardServer(
 
         if (req.method === "GET" && req.url === "/efirmas") {
           if (!session.idToken) {
-            send(401, { ok: false, error: "iniciá sesión primero (Google)" });
+            send(401, { ok: false, error: "inicia sesión primero (Google)" });
             return;
           }
           const rfcs = await store.list();
@@ -387,7 +387,7 @@ export function startOnboardServer(
 
         if (req.method === "POST" && req.url === "/refiel") {
           if (!session.idToken) {
-            send(401, { ok: false, error: "iniciá sesión primero (Google)" });
+            send(401, { ok: false, error: "inicia sesión primero (Google)" });
             return;
           }
           try {

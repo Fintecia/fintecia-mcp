@@ -26,7 +26,7 @@ export class KeychainFielProvider implements FielProvider {
       // actionable hint instead of the misleading "not registered" error.
       throw new Error(
         `La e-firma del RFC ${rfcUpper} está registrada, pero su contraseña no ` +
-          `está en el keyring. Volvé a correr fintecia_login para re-ingresarla ` +
+          `está en el keyring. Vuelve a correr fintecia_login para reingresarla ` +
           `(vinculación T1b).`,
       );
     }
