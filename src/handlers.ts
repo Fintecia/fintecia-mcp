@@ -29,6 +29,21 @@ import {
 import { readCfdiXml, searchEntries } from "./fin/readLocal.js";
 
 /**
+ * #195 — resuelve el `periodKey` de `fintecia_financials`. `periodKey`
+ * (YYYY / YYYY-QN / YYYY-MM) tiene precedencia; si falta, `hasta` se trunca a
+ * mes (compat). Devuelve `undefined` cuando no hay corte.
+ */
+export function resolveFinancialsPeriodKey(input: {
+  periodKey?: unknown;
+  hasta?: unknown;
+}): string | undefined {
+  const pk = typeof input.periodKey === "string" ? input.periodKey.trim() : "";
+  if (pk) return pk;
+  const hasta = typeof input.hasta === "string" ? input.hasta.trim() : "";
+  return hasta ? hasta.slice(0, 7) : undefined;
+}
+
+/**
  * Tool handlers. Real implementations are wired here as they land (T1b+);
  * un-implemented tools keep a stub that names the pending task.
  *
@@ -274,11 +289,10 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
 
   handlers.set("fintecia_financials", async (input) => {
     const taxpayerRfc = String(input.taxpayerRfc ?? "");
+    const periodKey = resolveFinancialsPeriodKey(input);
     return json(
       await readClient.read("/api/v1/mcp/financials", taxpayerRfc, {
-        ...(typeof input.hasta === "string"
-          ? { periodKey: input.hasta.slice(0, 7) }
-          : {}),
+        ...(periodKey ? { periodKey } : {}),
       }),
     );
   });

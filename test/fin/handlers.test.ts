@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import JSZip from "jszip";
-import { createHandlers } from "../../src/handlers.js";
+import { createHandlers, resolveFinancialsPeriodKey } from "../../src/handlers.js";
 import { TOOLS } from "../../src/tools.js";
 
 // handlers.ts imports `./fiel/fiel.js` (for cfdi_download's razonSocial),
@@ -88,5 +88,27 @@ describe("read-local handler wiring (S4)", () => {
     await expect(
       handlers.get("cfdi_local_detail")!({ uuid: "missing-uuid" }),
     ).rejects.toThrow(/no encontrado/);
+  });
+});
+
+describe("resolveFinancialsPeriodKey (#195)", () => {
+  test("periodKey explícito (año) tiene precedencia sobre hasta", () => {
+    expect(resolveFinancialsPeriodKey({ periodKey: "2025", hasta: "2026-01-01" })).toBe("2025");
+  });
+
+  test("periodKey trimestre pasa tal cual", () => {
+    expect(resolveFinancialsPeriodKey({ periodKey: "2025-Q4" })).toBe("2025-Q4");
+  });
+
+  test("periodKey mes pasa tal cual", () => {
+    expect(resolveFinancialsPeriodKey({ periodKey: "2025-11" })).toBe("2025-11");
+  });
+
+  test("sin periodKey, hasta se trunca a mes (compat)", () => {
+    expect(resolveFinancialsPeriodKey({ hasta: "2025-01-15" })).toBe("2025-01");
+  });
+
+  test("sin nada → undefined (default del backend)", () => {
+    expect(resolveFinancialsPeriodKey({})).toBeUndefined();
   });
 });
