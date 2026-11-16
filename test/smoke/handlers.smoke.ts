@@ -49,7 +49,7 @@ await rejects(
     hasta: "2026-01-31",
     rfc: "AAA010101AAA",
   }),
-  /Iniciá sesión primero/,
+  /Inicia sesión primero/,
 );
 
 // cfdi_download rejects when no FIEL is registered for the RFC (with auth present).
@@ -100,7 +100,7 @@ if (!/Sin descargas/.test(empty)) {
 // Without a session it must reject (never return stale fixture data).
 await rejects(
   handlers.get("sat_efos_check")!({ rfc: "AAA120730823" }),
-  /Iniciá sesión/,
+  /Inicia sesión/,
 );
 
 // With a session + backend, sat_efos_check returns the backend entry.

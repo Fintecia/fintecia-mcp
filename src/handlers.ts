@@ -170,14 +170,14 @@ export function createHandlers(deps: HandlerDeps = {}): Map<string, ToolHandler>
     const idToken = await (deps.getAuthToken?.() ?? Promise.resolve(null));
     if (!idToken) {
       throw new Error(
-        "Iniciá sesión primero (fintecia_login) antes de descargar CFDIs.",
+        "Inicia sesión primero (fintecia_login) antes de descargar CFDIs.",
       );
     }
     const material = await fielProvider.load(args.rfc);
     if (!material) {
       throw new Error(
         `No hay e-firma local registrada para el RFC ${args.rfc}. ` +
-          `Conectá la e-firma primero (vinculación T1b).`,
+          `Conecta la e-firma primero (vinculación T1b).`,
       );
     }
     const job = jobStore.create({

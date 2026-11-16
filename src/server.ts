@@ -145,7 +145,7 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
           {
             type: "text",
             text:
-              `Abrí esta URL en tu navegador para iniciar sesión con Google ` +
+              `Abre esta URL en tu navegador para iniciar sesión con Google ` +
               `y conectar tu e-firma:\n\n${onboard.url}`,
           },
         ],

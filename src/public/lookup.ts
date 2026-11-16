@@ -40,7 +40,7 @@ export class PublicLookupClient {
     const idToken = await this.config.getAuthToken();
     if (!idToken) {
       throw new Error(
-        "Iniciá sesión primero (fintecia_login) antes de consultar listados del SAT.",
+        "Inicia sesión primero (fintecia_login) antes de consultar listados del SAT.",
       );
     }
     const res = await this.fetch(

@@ -12,4 +12,4 @@ const { url } = await startOnboardServer(store, session, (s) => {
 });
 
 console.log(`Abriendo onboarding en ${url}`);
-console.log("Pegá esa URL en tu navegador: iniciá sesión con Google y cargá .cer + .key + contraseña.");
+console.log("Pega esa URL en tu navegador: inicia sesión con Google y carga .cer + .key + contraseña.");
