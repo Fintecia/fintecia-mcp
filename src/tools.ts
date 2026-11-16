@@ -182,7 +182,12 @@ export const TOOLS: ToolDef[] = [
       "For the meaning of each field, call fintecia_glosario first.",
     inputSchema: z.object({
       taxpayerRfc: z.string().describe("RFC del contribuyente a consultar."),
-      hasta: z.string().optional().describe("Corte (YYYY-MM-DD), default hoy."),
+      periodKey: z.string().optional().describe(
+        "Período: YYYY (año), YYYY-QN (trimestre) o YYYY-MM (mes). Default: mes actual.",
+      ),
+      hasta: z.string().optional().describe(
+        "Corte (YYYY-MM-DD), default hoy. Deprecado en favor de periodKey.",
+      ),
     }),
     annotations: { readOnlyHint: true },
   },
