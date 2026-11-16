@@ -46,7 +46,7 @@ jobs:
           GITHUB_REF: ${{ github.ref }}
 
       - name: Install
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Build
         run: npm run build
