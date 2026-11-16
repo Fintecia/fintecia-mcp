@@ -13,7 +13,7 @@ import { FileFielStore } from "./fiel/store.js";
 import { startOnboardServer } from "./onboard/server.js";
 import { detectKeychain, fielKeychainKey } from "./keychain/keychain.js";
 import { KeychainFielProvider } from "./sat/keychainFielProvider.js";
-import { API_BASE_URL } from "./auth/firebaseConfig.js";
+import { API_BASE_URL, FIREBASE_WEB_CONFIG } from "./auth/firebaseConfig.js";
 
 // Versión del servidor: leída de package.json (fuente única), no hardcodeada.
 // `dist/server.js` resuelve `../package.json` a la raíz del paquete publicado.
@@ -70,7 +70,7 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
   const handlers = createHandlers({
     fielProvider,
     uploadBaseUrl: API_BASE_URL,
-    getAuthToken: async () => session.idToken,
+    getAuthToken: async () => session.getFreshIdToken(FIREBASE_WEB_CONFIG.apiKey),
     emit: (event, data) => telemetry.emit(event, data),
     listEfirmas: async () => {
       const rfcs = await fielStore.list();
