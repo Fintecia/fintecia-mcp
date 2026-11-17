@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { normalizeAgent, TelemetryClient } from "../src/telemetry/client.js";
 
 function mockFetch(handler: (input: string, init?: RequestInit) => Response) {
@@ -6,11 +9,15 @@ function mockFetch(handler: (input: string, init?: RequestInit) => Response) {
 
 const ok = () => new Response("ok", { status: 200 });
 
-function capture(agent?: string | (() => string | undefined)) {
+function capture(
+  agent?: string | (() => string | undefined),
+  channel: string | null = null,
+) {
   const state = { url: "", events: [] as Array<Record<string, unknown>> };
   const client = new TelemetryClient({
     baseUrl: "https://api.fintecia.example",
     ...(agent !== undefined ? { agent } : {}),
+    channel,
     fetchFn: mockFetch((input, init) => {
       state.url = input;
       state.events = JSON.parse(String(init?.body)).events;
@@ -44,8 +51,8 @@ describe("TelemetryClient", () => {
     expect(state.events[0].source).toEqual({ agent: "Claude Desktop", channel: null });
   });
 
-  test("source.channel stays null across every event (no referrer/UTM mechanism yet)", async () => {
-    const { client, state } = capture();
+  test("source.channel carries the configured install REF on every event", async () => {
+    const { client, state } = capture("Claude Desktop", "ga-abc123");
 
     client.emit("first_run");
     client.emit("login_started");
@@ -55,13 +62,39 @@ describe("TelemetryClient", () => {
 
     expect(state.events).toHaveLength(4);
     for (const event of state.events) {
-      expect(event.source).toEqual({ agent: "unknown", channel: null });
+      expect(event.source).toEqual({ agent: "Claude Desktop", channel: "ga-abc123" });
+    }
+  });
+
+  test("source.channel is null when unset and no install-ref exists", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "fintecia-installref-"));
+    const prevHome = process.env.HOME;
+    process.env.HOME = dir;
+    try {
+      const state = { url: "", events: [] as Array<Record<string, unknown>> };
+      const client = new TelemetryClient({
+        baseUrl: "https://api.fintecia.example",
+        fetchFn: mockFetch((input, init) => {
+          state.url = input;
+          state.events = JSON.parse(String(init?.body)).events;
+          return ok();
+        }),
+      });
+
+      client.emit("first_run");
+      await client.flush();
+
+      expect(state.events[0].source).toEqual({ agent: "unknown", channel: null });
+    } finally {
+      process.env.HOME = prevHome;
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 
   test("does not flush when baseUrl is unset", async () => {
     let called = false;
     const client = new TelemetryClient({
+      channel: null,
       fetchFn: mockFetch(() => {
         called = true;
         return ok();
@@ -75,6 +108,7 @@ describe("TelemetryClient", () => {
   test("swallows fetch errors (never fails the tool)", async () => {
     const client = new TelemetryClient({
       baseUrl: "https://x",
+      channel: null,
       fetchFn: mockFetch(() => {
         throw new Error("boom");
       }),
@@ -87,6 +121,7 @@ describe("TelemetryClient", () => {
     let called = false;
     const client = new TelemetryClient({
       baseUrl: "https://x",
+      channel: null,
       enabled: false,
       fetchFn: mockFetch(() => {
         called = true;

@@ -25,3 +25,19 @@ ecosystem = "npm"
 vulnerability.ignore = true
 reason = "GHSA-g3hv-75wg-m249 (DoS via globparts amplification). Fix is minimatch@11 (breaking major). Dev-only transitive of the jest/glob toolchain — no attacker-controlled glob patterns here."
 effectiveUntil = 2027-05-11
+
+[[PackageOverrides]]
+name = "picomatch"
+version = "2.3.2"
+ecosystem = "npm"
+vulnerability.ignore = true
+reason = "GHSA-fc5q-39xc-vjpf (ReDoS via single-branch repeated extglobs). Transitive of anymatch/micromatch→jest-haste-map (jest toolchain). No fix available. Dev-only: matches the developer's own file-glob config, never attacker-controlled patterns."
+effectiveUntil = 2027-05-17
+
+[[PackageOverrides]]
+name = "picomatch"
+version = "4.0.7"
+ecosystem = "npm"
+vulnerability.ignore = true
+reason = "GHSA-fc5q-39xc-vjpf. Transitive of tinyglobby (typescript-eslint). Dev-only, no attacker-controlled glob patterns; no fix available."
+effectiveUntil = 2027-05-17
