@@ -124,7 +124,10 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Hard gate on high+ severity. Low severity (e.g. jest's dev-only
-      # deepmerge) does NOT block; it is tracked and re-triaged on bump.
+      # Hard gate on high+ severity over PRODUCTION deps only. Dev-toolchain
+      # advisories (picomatch ReDoS, deepmerge, glob, minimatch) are dev-only
+      # and triaged in osv-scanner.toml (the `dependency-scan` job covers the
+      # full tree with its triage). `--omit=dev` keeps this gate on the shipped
+      # code without failing on jest/typescript-eslint transitive dev deps.
       - name: Audit dependencies (npm)
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high --omit=dev
