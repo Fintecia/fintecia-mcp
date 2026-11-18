@@ -144,6 +144,7 @@ Qué se queda local y qué se envía a Fintecia — transparente, sin letra chic
   la autenticación es OAuth de *loopback* — tu navegador hace el login y el token
   queda en memoria, no en disco.
 - Todo acceso a tus datos pasa por tu sesión autenticada.
+- **Modelo de seguridad y reporte de vulnerabilidades:** véase [`SECURITY.md`](./SECURITY.md).
 
 ## Supply-chain
 
