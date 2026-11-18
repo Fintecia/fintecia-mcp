@@ -22,6 +22,9 @@ const SERVICE = "fintecia-mcp";
 /** macOS Keychain via `security` CLI. */
 class MacKeychain implements Keychain {
   async set(key: string, secret: string): Promise<void> {
+    // The `security` CLI has no stdin option for `-w`: the secret is briefly
+    // visible in `ps` argv (milliseconds). Known limitation of the native-CLI
+    // approach (no keytar); Linux avoids this via secret-tool stdin.
     await execFileAsync("security", [
       "add-generic-password",
       "-a", key,
@@ -55,13 +58,17 @@ class MacKeychain implements Keychain {
 /** Windows DPAPI via PowerShell (ProtectData / UnprotectData). */
 class WinKeychain implements Keychain {
   async set(key: string, secret: string): Promise<void> {
+    // Secret via stdin (not argv): the base64 never appears in `ps`/Task Manager.
+    // Stored format stays UTF8(base64(secret)) → backward-compatible.
     const b64 = Buffer.from(secret, "utf8").toString("base64");
-    await execFileAsync("powershell", [
-      "-NoProfile", "-Command",
+    const script =
       `Add-Type -AssemblyName System.Security; ` +
-        `[IO.File]::WriteAllBytes($env:LOCALAPPDATA + '\\fintecia-${sanitizeWin(key)}', ` +
-        `[Security.Cryptography.ProtectedData]::Protect([Text.Encoding]::UTF8.GetBytes('${b64}'), $null, 'CurrentUser'))`,
-    ]);
+      `$b64 = [Console]::In.ReadToEnd().Trim(); ` +
+      `[IO.File]::WriteAllBytes($env:LOCALAPPDATA + '\\fintecia-${sanitizeWin(key)}', ` +
+      `[Security.Cryptography.ProtectedData]::Protect([Text.Encoding]::UTF8.GetBytes($b64), $null, 'CurrentUser'))`;
+    // execFileSync (sync) because the async execFile has no `input`/stdin option;
+    // mirrors the Linux keychain's secret-tool stdin call. Quick CLI, blocking is fine.
+    execFileSync("powershell", ["-NoProfile", "-Command", script], { input: b64 });
   }
   async get(key: string): Promise<string | null> {
     try {
