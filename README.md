@@ -19,7 +19,7 @@ que **nunca sale de tu máquina**.
 
 ## Estado del proyecto
 
-Esta es una **versión temprana (1.2.0)**. Lo disponible hoy:
+Esta es una **versión temprana**. Lo disponible hoy:
 
 - ✅ Descarga de CFDI del SAT con e-firma local + materialización en Fintecia.
 - ✅ Consultas materializadas: `fintecia_financials` (estados NIF B-3/B-6),
