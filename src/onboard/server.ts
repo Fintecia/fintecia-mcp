@@ -302,6 +302,16 @@ export function startOnboardServer(
           res.end(JSON.stringify(body));
         };
 
+        // Only accept loopback Host headers — rejects DNS-rebinding (a malicious
+        // domain resolving to 127.0.0.1 would carry a foreign Host and must not
+        // reach the token/FIEL endpoints). The onboarding page always hits
+        // 127.0.0.1:<port> or localhost:<port>.
+        const host = req.headers.host ?? "";
+        if (!/^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(host)) {
+          send(403, { ok: false, error: "forbidden host" });
+          return;
+        }
+
         if (req.method === "GET" && req.url === "/") {
           res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
           res.end(
