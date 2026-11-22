@@ -39,6 +39,15 @@ printf 'feat(hooks): enforce no AI attribution\n\nCuerpo.\n' > "$TMP/msg"
 printf 'Merge branch x into y\n' > "$TMP/msg"
 "$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject Merge aceptado"
 
+printf 'Revert "feat(x): revierte algo"\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject Revert git-generado aceptado"
+
+printf 'Reverted the session timeout change\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "subject 'Reverted...' no es exención (bypass)"
+
+printf 'Amended docs for hooks\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "subject 'Amended...' no es exención (bypass)"
+
 # Mensaje largo con atribución al final (edge case pipefail).
 { for i in $(seq 1 2000); do echo "línea $i"; done; echo; echo "Co-Authored-By: Copilot <x@y>"; } > "$TMP/msg"
 "$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "mensaje largo con atribución rechazado"
