@@ -20,10 +20,10 @@ fi
 #    Se permiten subjects auto-generados por git (merge/revert/rebase/squash) y release.
 SUBJECT="$(head -n1 <<< "$MSG")"
 #    Solo se eximen las formas literales que git genera de verdad (no cualquier prefijo):
-#    "Merge branch ...", "Merge pull request #...", "Revert \"...\"", "Squashed commit of the following:",
+#    "Merge branch(es) ...", "Merge pull request #...", "Revert \"...\"", "Squashed commit of the following:",
 #    y el release propio "chore(release):". Así "Reverted..."/"Amended..."/"Merge conflicts..."
 #    /"Revert logic..." no esquivan el check de Conventional Commits.
-if grep -Eq '^(Merge (branch|remote-tracking branch|pull request|tag|commit) |Revert "|Squashed commit of the following:|chore\(release\):)' <<< "$SUBJECT"; then
+if grep -Eq '^(Merge (branch|branches|remote-tracking branch|remote-tracking branches|pull request|tag|commit) |Revert "|Squashed commit of the following:|chore\(release\):)' <<< "$SUBJECT"; then
   exit 0
 fi
 

@@ -57,6 +57,12 @@ printf 'Revert logic for retries\n' > "$TMP/msg"
 printf "Merge branch 'feat/x' into 'main'\n" > "$TMP/msg"
 "$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject 'Merge branch ...' git-generado aceptado"
 
+printf "Merge branches 'a', 'b' and 'c'\n" > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject 'Merge branches ...' octopus git-generado aceptado"
+
+printf "Merge remote-tracking branches 'origin/a', 'origin/b'\n" > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject 'Merge remote-tracking branches ...' git-generado aceptado"
+
 printf "Merge commit 'abc123'\n" > "$TMP/msg"
 "$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject 'Merge commit ...' git-generado aceptado"
 
