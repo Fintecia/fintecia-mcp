@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Tests de los hooks de delivery (.githooks/commit-msg y .githooks/pre-push).
+# Afirma los casos de aceptación y rechazo de cada hook.
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+HOOKS="$ROOT/.githooks"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+pass=0
+fail=0
+
+assert_reject() { # $1 = descripción (el hook ya se corrió contra "$TMP/msg" o stdin)
+  local rc=$?
+  if [ "$rc" -ne 0 ]; then echo "  ✅ $1"; pass=$((pass+1)); else echo "  ❌ $1 (esperaba rechazo)"; fail=$((fail+1)); fi
+}
+assert_accept() {
+  local rc=$?
+  if [ "$rc" -eq 0 ]; then echo "  ✅ $1"; pass=$((pass+1)); else echo "  ❌ $1 (esperaba aceptar)"; fail=$((fail+1)); fi
+}
+
+echo "commit-msg:"
+printf 'fix: algo\n\nCo-Authored-By: Claude <c@example.com>\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "Co-Authored-By rechazado"
+
+printf 'feat(x): ok\n\nGenerated with Claude\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "atribución IA rechazada"
+
+printf 'feat(x): ok\n\n🤖\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "emoji robot rechazado"
+
+printf 'agregué un fix rápido\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "subject sin Conventional Commits rechazado"
+
+printf 'feat(hooks): enforce no AI attribution\n\nCuerpo.\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "Conventional Commits válido aceptado"
+
+printf 'Merge branch x into y\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject Merge aceptado"
+
+# Mensaje largo con atribución al final (edge case pipefail).
+{ for i in $(seq 1 2000); do echo "línea $i"; done; echo; echo "Co-Authored-By: Copilot <x@y>"; } > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "mensaje largo con atribución rechazado"
+
+echo "pre-push:"
+printf 'refs/heads/main abc refs/heads/main abc\n' > "$TMP/push"
+"$HOOKS/pre-push" < "$TMP/push" >/dev/null 2>&1; assert_reject "push a main (origen) rechazado"
+
+printf 'refs/heads/feat/x abc refs/heads/main abc\n' > "$TMP/push"
+"$HOOKS/pre-push" < "$TMP/push" >/dev/null 2>&1; assert_reject "push feature->main (refspec) rechazado"
+
+printf 'refs/heads/feat/x abc refs/heads/feat/x abc\n' > "$TMP/push"
+"$HOOKS/pre-push" < "$TMP/push" >/dev/null 2>&1; assert_accept "push feature->feature aceptado"
+
+echo
+echo "Resultado: $pass pasaron, $fail fallaron"
+[ "$fail" -eq 0 ]

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Enforce: sin atribución a IA ni trailers Co-Authored-By + Conventional Commits.
+set -euo pipefail
+
+COMMIT_MSG_FILE="$1"
+MSG="$(cat "$COMMIT_MSG_FILE")"
+
+# 1) Rechazar atribución a IA / trailers Co-Authored-By.
+#    Se usan here-strings (<<<) en vez de `echo | grep` para evitar que,
+#    con `set -o pipefail`, un grep -q que corta temprano haga fallar el pipe.
+if grep -iEq '^(co-authored-by|coauthored-by):' <<< "$MSG" \
+  || grep -iEq '(generated|written|assisted|created)[ -](with|by)[ -](an? )?(ai|claude|chatgpt|copilot|gemini|cursor|gpt|openai)' <<< "$MSG" \
+  || grep -q '🤖' <<< "$MSG"; then
+  echo "❌ commit-msg: no se permite atribución a IA ni trailers Co-Authored-By." >&2
+  echo "   Quitá el trailer 'Co-Authored-By: ...' o cualquier mención de generación por IA." >&2
+  exit 1
+fi
+
+# 2) Exigir Conventional Commits en el subject (primera línea).
+#    Se permiten subjects auto-generados por git (merge/revert/rebase/squash) y release.
+SUBJECT="$(head -n1 <<< "$MSG")"
+if grep -Eq '^(Merge|Revert|Rebase|Squashed commit|Amend|chore\(release\))' <<< "$SUBJECT"; then
+  exit 0
+fi
+
+if ! grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_.-]+\))?!?: .+' <<< "$SUBJECT"; then
+  echo "❌ commit-msg: el subject debe seguir Conventional Commits." >&2
+  echo "   Formato: <tipo>[<scope>]: <descripción>  (feat, fix, docs, chore, ...)" >&2
+  echo "   Recibido: $SUBJECT" >&2
+  exit 1
+fi
+
+exit 0

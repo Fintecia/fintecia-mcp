@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Rechazar push directo a ramas protegidas (main/master), tanto en origen (local_ref)
+# como en destino (remote_ref), para cubrir refspecs tipo `git push origin feature:main`.
+set -euo pipefail
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  for ref in "$local_ref" "$remote_ref"; do
+    case "$ref" in
+      refs/heads/main|refs/heads/master)
+        echo "❌ pre-push: '$ref' está protegida. Push directo rechazado." >&2
+        echo "   Creá una branch desde origin/main y abrí un MR/PR." >&2
+        exit 1
+        ;;
+    esac
+  done
+done
+
+exit 0
