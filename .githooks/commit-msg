@@ -19,9 +19,11 @@ fi
 # 2) Exigir Conventional Commits en el subject (primera línea).
 #    Se permiten subjects auto-generados por git (merge/revert/rebase/squash) y release.
 SUBJECT="$(head -n1 <<< "$MSG")"
-#    El límite de palabra (\b) evita que "Reverted..."/"Amended..."/"Merged..." matcheen
-#    "Revert"/"Amend"/"Merge" y esquiven el check de Conventional Commits.
-if grep -Eq '^(Merge|Revert|Rebase|Amend)\b|^Squashed commit\b|^chore\(release\):' <<< "$SUBJECT"; then
+#    Solo se eximen las formas literales que git genera de verdad (no cualquier prefijo):
+#    "Merge branch ...", "Merge pull request #...", "Revert \"...\"", "Squashed commit of the following:",
+#    y el release propio "chore(release):". Así "Reverted..."/"Amended..."/"Merge conflicts..."
+#    /"Revert logic..." no esquivan el check de Conventional Commits.
+if grep -Eq '^(Merge (branch|remote-tracking branch|pull request|tag|commit) |Revert "|Squashed commit of the following:|chore\(release\):)' <<< "$SUBJECT"; then
   exit 0
 fi
 

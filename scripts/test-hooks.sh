@@ -48,6 +48,27 @@ printf 'Reverted the session timeout change\n' > "$TMP/msg"
 printf 'Amended docs for hooks\n' > "$TMP/msg"
 "$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "subject 'Amended...' no es exención (bypass)"
 
+printf 'Merge conflicts in login\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "subject 'Merge conflicts...' no es exención (bypass)"
+
+printf 'Revert logic for retries\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "subject 'Revert logic...' no es exención (bypass)"
+
+printf "Merge branch 'feat/x' into 'main'\n" > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject 'Merge branch ...' git-generado aceptado"
+
+printf "Merge commit 'abc123'\n" > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject 'Merge commit ...' git-generado aceptado"
+
+printf 'Merge pull request #123 from org/feat\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject 'Merge pull request #...' git-generado aceptado"
+
+printf 'Squashed commit of the following:\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject 'Squashed commit of the following:' aceptado"
+
+printf 'chore(release): v1.2.0\n' > "$TMP/msg"
+"$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_accept "subject 'chore(release):' aceptado"
+
 # Mensaje largo con atribución al final (edge case pipefail).
 { for i in $(seq 1 2000); do echo "línea $i"; done; echo; echo "Co-Authored-By: Copilot <x@y>"; } > "$TMP/msg"
 "$HOOKS/commit-msg" "$TMP/msg" >/dev/null 2>&1; assert_reject "mensaje largo con atribución rechazado"
