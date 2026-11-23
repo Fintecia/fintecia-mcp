@@ -155,3 +155,7 @@ Qué se queda local y qué se envía a Fintecia — transparente, sin letra chic
 ## Licencia
 
 MIT
+
+## Desarrollo
+
+Los hooks de delivery se instalan con `npm run hooks:install` (`core.hooksPath` → `.githooks/`): `commit-msg` exige Conventional Commits sin atribución a IA y `pre-push` rechaza el push directo a `main`. Tests: `npm run hooks:test`.

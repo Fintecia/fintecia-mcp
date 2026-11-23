@@ -46,6 +46,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "jest",
+    "hooks:install": "bash scripts/install-hooks.sh",
+    "hooks:test": "bash scripts/test-hooks.sh",
     "test:smoke": "tsx test/smoke/fiel.smoke.ts && tsx test/smoke/onboard.smoke.ts && tsx test/smoke/descarga.smoke.ts && tsx test/smoke/handlers.smoke.ts && tsx test/smoke/telemetry-events.smoke.ts && tsx test/smoke/agent-detection.smoke.ts && tsx test/smoke/cfdi-seal.smoke.ts",
     "onboard": "tsx src/onboard/cli.ts"
   },
