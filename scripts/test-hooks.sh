@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests de los hooks de delivery (.githooks/commit-msg y .githooks/pre-push).
+# Tests de los hooks de delivery (.githooks/commit-msg, .githooks/pre-push y .githooks/pre-commit).
 # Afirma los casos de aceptación y rechazo de cada hook.
 set -uo pipefail
 
@@ -88,6 +88,43 @@ printf 'refs/heads/feat/x abc refs/heads/main abc\n' > "$TMP/push"
 
 printf 'refs/heads/feat/x abc refs/heads/feat/x abc\n' > "$TMP/push"
 "$HOOKS/pre-push" < "$TMP/push" >/dev/null 2>&1; assert_accept "push feature->feature aceptado"
+
+echo "pre-commit (session lease):"
+# El hook pre-commit resuelve el git-dir según el cwd, así que corre contra
+# un repo temporal. Cada caso aísla el lease con un repo propio.
+run_precommit() { # $1 = OPENCODE_SESSION_ID (vacío = unset), $2 = ruta al repo
+  if [ -n "$1" ]; then
+    OPENCODE_SESSION_ID="$1" "$HOOKS/pre-commit" >/dev/null 2>&1
+  else
+    env -u OPENCODE_SESSION_ID "$HOOKS/pre-commit" >/dev/null 2>&1
+  fi
+}
+
+PCREPO_A="$(mktemp -d)"
+git -C "$PCREPO_A" init -q
+(cd "$PCREPO_A" && run_precommit "" "$PCREPO_A"); assert_accept "sin OPENCODE_SESSION_ID → no-op (acepta)"
+
+PCREPO_B="$(mktemp -d)"
+git -C "$PCREPO_B" init -q
+(cd "$PCREPO_B" && run_precommit "ses-a" "$PCREPO_B"); assert_accept "primer commit → claim + acepta"
+[ -f "$PCREPO_B/.git/session-lease" ]; assert_accept "lease escrito en el git-dir"
+[ "$(cat "$PCREPO_B/.git/session-lease")" = "ses-a" ]; assert_accept "lease contiene el OPENCODE_SESSION_ID"
+
+(cd "$PCREPO_B" && run_precommit "ses-a" "$PCREPO_B"); assert_accept "misma sesión → acepta"
+
+(cd "$PCREPO_B" && run_precommit "ses-b" "$PCREPO_B"); assert_reject "otra sesión → rechaza"
+[ "$(cat "$PCREPO_B/.git/session-lease")" = "ses-a" ]; assert_accept "reject no pisa el lease (sigue ses-a)"
+
+# session-lease.sh status + subcomando inválido.
+(cd "$PCREPO_B" && "$ROOT/scripts/session-lease.sh" status 2>&1 | grep -q "ses-a"); assert_accept "status muestra el lease"
+(cd "$PCREPO_B" && "$ROOT/scripts/session-lease.sh" bogus >/dev/null 2>&1); assert_reject "subcomando inválido → exit != 0"
+
+# release manual limpia el lease y permite re-claim.
+(cd "$PCREPO_B" && "$ROOT/scripts/session-lease.sh" release >/dev/null 2>&1); assert_accept "session-lease.sh release limpia el lease"
+[ ! -f "$PCREPO_B/.git/session-lease" ]; assert_accept "lease removido tras release"
+(cd "$PCREPO_B" && run_precommit "ses-c" "$PCREPO_B"); assert_accept "re-claim tras release acepta"
+
+rm -rf "$PCREPO_A" "$PCREPO_B"
 
 echo
 echo "Resultado: $pass pasaron, $fail fallaron"

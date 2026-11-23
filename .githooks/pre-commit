@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Enforce una-sesión-por-checkout: rechaza commits de una sesión distinta a la
+# que reclama el checkout actual, para evitar cross-contamination entre
+# sesiones paralelas compartiendo el mismo directorio físico.
+#
+# El lease vive en el git-dir del checkout ($(git rev-parse --git-dir)/session-lease),
+# un archivo por checkout físico — no por repo. Sesiones en worktrees distintos
+# tienen git-dirs distintos y no chocan.
+set -euo pipefail
+
+SESSION_ID="${OPENCODE_SESSION_ID:-}"
+
+# Commit manual (sin OPENCODE_SESSION_ID): no-op, no bloquear git humano legítimo.
+if [ -z "$SESSION_ID" ]; then
+  exit 0
+fi
+
+GIT_DIR="$(git rev-parse --git-dir)"
+LEASE_FILE="$GIT_DIR/session-lease"
+
+if [ -f "$LEASE_FILE" ]; then
+  OWNER="$(cat "$LEASE_FILE")"
+  if [ "$OWNER" = "$SESSION_ID" ]; then
+    exit 0
+  fi
+  echo "❌ pre-commit: este checkout lo está usando otra sesión ($OWNER)." >&2
+  echo "   Para trabajo paralelo usá un worktree en .worktrees/, o liberá el lease:" >&2
+  echo "   bash scripts/session-lease.sh release" >&2
+  exit 1
+fi
+
+# Primer commit de esta sesión en este checkout: reclamar el lease.
+printf '%s\n' "$SESSION_ID" > "$LEASE_FILE"
+exit 0
